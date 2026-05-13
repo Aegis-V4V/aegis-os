@@ -180,23 +180,39 @@ loginBtn.addEventListener('click', async () => {
         console.log("2. WebLN found. Calling enable()...");
         await window.webln.enable();
         
-        console.log("3. WebLN enabled. Checking for getInfo...");
-        if (typeof window.webln.getInfo !== 'function') {
-            console.log("Error: getInfo is not a function on this provider.");
-            throw new Error('Your Lightning provider does not support getInfo(). We need your pubkey to log you in!');
+        let pubkey = null;
+        console.log("3. WebLN enabled. Attempting to read wallet info...");
+
+        if (typeof window.webln.getInfo === 'function') {
+            try {
+                const info = await window.webln.getInfo();
+                console.log("4. Info received from wallet:", info);
+                if (info && info.node && info.node.pubkey) {
+                    pubkey = info.node.pubkey;
+                }
+            } catch (infoErr) {
+                console.warn("Error reading wallet info:", infoErr);
+            }
         }
 
-        const info = await window.webln.getInfo();
-        console.log("4. Info received from wallet:", info);
-        
-        // Use their node pubkey as their unique ID
-        if (!info || !info.node || !info.node.pubkey) {
-            console.log("Error: Pubkey missing from info object", info);
-            throw new Error("Could not retrieve pubkey from your wallet.");
+        // Robust Fallback prompt if wallet is connected but didn't share pubkey (e.g. non-custodial or fresh account)
+        if (!pubkey) {
+            console.log("Pubkey not provided by wallet. Launching alias prompt.");
+            const alias = prompt(
+                "🔒 WALLET ATTACHED\n\n" +
+                "Your Lightning extension is connected, but did not share a static Node Key.\n\n" +
+                "Please enter a Pilot Alias or Username to log in and provision your ledger account:"
+            );
+            if (!alias) {
+                throw new Error("Login cancelled. A name is required to track your credit ledger.");
+            }
+            pubkey = "alias:" + alias.trim();
+            if (pubkey.length < 9) { // "alias:" is 6 chars + min 3 for username
+                throw new Error("Alias must be at least 3 characters long.");
+            }
         }
         
-        const pubkey = info.node.pubkey;
-        console.log("5. Sending pubkey to backend:", pubkey);
+        console.log("5. Authenticating account:", pubkey);
         
         const res = await fetch(`${API_BASE}/login`, {
             method: 'POST',

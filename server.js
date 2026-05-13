@@ -113,8 +113,17 @@ app.get('/api/scan', async (req, res) => {
 
     console.log(`[API] Scanning Feed: ${url}`);
     try {
-        const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        // Inject browser-grade headers to bypass Cloudflare/hosting blocks and increase timeout
+        const response = await fetch(url, { 
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 (Compatible; Podcasting2.0-Spider-Assayer/1.0)',
+                'Accept': 'text/xml, application/rss+xml, application/xml, */*',
+                'Accept-Encoding': 'gzip, deflate, br'
+            },
+            signal: AbortSignal.timeout(15000) 
+        });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status} - Access Refused by Podcast Host`);
         
         const xmlData = await response.text();
         const jsonObj = parser.parse(xmlData);

@@ -1,3 +1,4 @@
+import { V4V_TRACKS } from './v4v_tracks.js';
 const API_BASE = '/api';
 
 // Viewport Router & Cockpit Core
@@ -34,6 +35,21 @@ const triggerReportBtn = document.getElementById('triggerReportBtn');
 const submitEmailBtn = document.getElementById('submitEmailBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const leadEmailInput = document.getElementById('leadEmail');
+
+// Technical Report Gating Helper
+function updateReportBtnState() {
+    const url = targetUrl ? targetUrl.textContent : "---";
+    const hasPodcast = (url && url !== "---" && url.startsWith('http'));
+    const isLoggedIn = !!currentUser;
+    
+    if (triggerReportBtn) {
+        if (hasPodcast && isLoggedIn) {
+            triggerReportBtn.removeAttribute('disabled');
+        } else {
+            triggerReportBtn.setAttribute('disabled', 'true');
+        }
+    }
+}
 
 // Gauges
 const omniGauge = document.getElementById('omniGauge');
@@ -97,6 +113,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (boostBtn) {
         boostBtn.addEventListener('click', handlePlatformBoost);
     }
+
+    // Initialize Report Button State Guard
+    updateReportBtnState();
 });
 
 /* --- 2. THE SCAN LIMIT COOKIE LOGIC --- */
@@ -265,6 +284,9 @@ async function executeScanRoutine(url, bypassLimit = false) {
             window.plotStarNeighborhood(data.title, url, data);
         }
 
+        // Update State Guards
+        updateReportBtnState();
+
     } catch (err) {
         console.error("Scan failed:", err);
         targetName.textContent = "SECTOR ERROR";
@@ -403,6 +425,9 @@ const performLogin = async () => {
             // Enable Funding
             if (btnAlby) btnAlby.removeAttribute('disabled');
             if (btnStrike) btnStrike.removeAttribute('disabled');
+
+            // Update State Guards
+            updateReportBtnState();
         }
     } catch (e) {
         alert("Login Lock: " + e.message);
@@ -462,10 +487,149 @@ if (btnAlby) {
                 alert(`🎉 DEPOSIT CONFIRMED!\n\nSuccessfully loaded ${amtSats} platform credits!`);
             }
         } catch(e) {
-            alert("Funding rejected: " + e.message);
+            alert("Communications failure: " + e.message);
         }
     });
 }
+
+/* --- 7. V4V RADIO HUD DECK LOGIC (Astrogation v2.1) --- */
+let currentTrackIdx = Math.floor(Math.random() * V4V_TRACKS.length);
+let isRadioPlaying = true; // Visual play state by default
+let radioTimer = null;
+
+const radioPlayBtn = document.getElementById('radioPlayBtn');
+const radioSkipBtn = document.getElementById('radioSkipBtn');
+const radioBoostBtn = document.getElementById('radioBoostBtn');
+const radioTrackText = document.getElementById('radioTrack');
+const radioArtistText = document.getElementById('radioArtist');
+const radioViz = document.querySelector('.radio-viz');
+
+// Optimized Sci-Fi Low Ambient Synthesizer Oscillator
+let synthCtx = null;
+let carrierNode = null;
+
+function initRadioAudio() {
+    try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        synthCtx = new AudioContext();
+        
+        // Atmospheric station drone 72.7 Hz
+        carrierNode = synthCtx.createOscillator();
+        const gainNode = synthCtx.createGain();
+        
+        carrierNode.type = 'sine';
+        carrierNode.frequency.setValueAtTime(72.7, synthCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.0001, synthCtx.currentTime); 
+        
+        carrierNode.connect(gainNode);
+        gainNode.connect(synthCtx.destination);
+        
+        carrierNode.start();
+        gainNode.gain.exponentialRampToValueAtTime(0.02, synthCtx.currentTime + 2);
+        window.stationGainNode = gainNode;
+        console.log("[V4V RADIO] Ambient Synthesis Module Activated.");
+    } catch(e) {
+        console.warn("[V4V RADIO] Audio blocked by system:", e);
+    }
+}
+
+function updateTrackDisplay() {
+    const track = V4V_TRACKS[currentTrackIdx];
+    if(radioTrackText) radioTrackText.textContent = track.title;
+    if(radioArtistText) radioArtistText.textContent = `ARTIST: ${track.artist}`;
+    
+    if (isRadioPlaying) {
+        if(radioViz) radioViz.style.animationPlayState = 'running';
+        if(radioViz) radioViz.style.background = '#4ade80';
+    } else {
+        if(radioViz) radioViz.style.animationPlayState = 'paused';
+        if(radioViz) radioViz.style.background = '#475569';
+    }
+}
+
+function cycleRadioTracks() {
+    if (!isRadioPlaying) return;
+    currentTrackIdx = (currentTrackIdx + 1) % V4V_TRACKS.length;
+    updateTrackDisplay();
+    clearTimeout(radioTimer);
+    radioTimer = setTimeout(cycleRadioTracks, 25000 + Math.random() * 15000);
+}
+
+if (radioPlayBtn) {
+    radioPlayBtn.addEventListener('click', () => {
+        if (!synthCtx) initRadioAudio();
+        
+        isRadioPlaying = !isRadioPlaying;
+        if (isRadioPlaying) {
+            radioPlayBtn.textContent = "PAUSE";
+            if (window.stationGainNode && synthCtx) window.stationGainNode.gain.exponentialRampToValueAtTime(0.02, synthCtx.currentTime + 0.8);
+            cycleRadioTracks();
+        } else {
+            radioPlayBtn.textContent = "PLAY";
+            if (window.stationGainNode && synthCtx) window.stationGainNode.gain.exponentialRampToValueAtTime(0.0001, synthCtx.currentTime + 0.8);
+            clearTimeout(radioTimer);
+        }
+        updateTrackDisplay();
+    });
+}
+
+if (radioSkipBtn) {
+    radioSkipBtn.addEventListener('click', () => {
+        currentTrackIdx = (currentTrackIdx + 1) % V4V_TRACKS.length;
+        updateTrackDisplay();
+    });
+}
+
+if (radioBoostBtn) {
+    radioBoostBtn.addEventListener('click', async () => {
+        if (!currentUser) return alert("Identify pilot ledger to initiate split streams!");
+        const track = V4V_TRACKS[currentTrackIdx];
+        
+        const amtStr = prompt(`⚡ DIRECT ARTIST SPLIT STREAM\n\nEnter amount in Satoshis to send directly to Artist:`, "50");
+        const amount = parseInt(amtStr, 10);
+        if (isNaN(amount) || amount <= 0) return;
+        
+        try {
+            radioBoostBtn.textContent = "ROUTING...";
+            
+            const invRes = await fetch(`${API_BASE}/invoice`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: amount, description: `V4V Radio: "${track.title}" split to artist` })
+            });
+            const invData = await invRes.json();
+            if (invData.error) throw new Error(invData.error);
+            
+            if (!window.webln) throw new Error("Pilot cockpit missing WebLN interface.");
+            await window.webln.enable();
+            const payResult = await window.webln.sendPayment(invData.payment_request);
+            
+            const splitRes = await fetch(`${API_BASE}/boost-artist`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: currentUser.id,
+                    amount_sats: amount,
+                    reference_id: payResult.preimage || invData.payment_hash,
+                    artist_node: track.node,
+                    song_title: track.title
+                })
+            });
+            const splitData = await splitRes.json();
+            if (splitData.success) {
+                alert(`🎵 V4V STREAM SPLIT!\n\nBroadcasted ${amount} Sats!\n⚡ ~53% routed directly to Artist Node!`);
+            }
+        } catch (e) {
+            alert("Stream Rejected: " + e.message);
+        } finally {
+            radioBoostBtn.textContent = "⚡ BOOST";
+        }
+    });
+}
+
+// Initiate Radio Loop
+updateTrackDisplay();
+radioTimer = setTimeout(cycleRadioTracks, 25000);
 
 if (btnStrike) {
     btnStrike.addEventListener('click', () => {

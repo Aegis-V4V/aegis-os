@@ -45,16 +45,16 @@ body {
 .cockpit-bezel {
   width: 100%;
   height: 100%;
-  background: radial-gradient(circle at center, #374151 0%, #111827 100%);
-  border: 10px solid #0f172a;
-  border-radius: 24px;
+  background: linear-gradient(135deg, #475569 0%, #1e293b 30%, #0f172a 50%, #1e293b 70%, #475569 100%);
+  border: 4px solid #64748b; /* Smaller & Shinier */
+  border-radius: 16px;
   box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.8),
-    inset 0 5px 15px rgba(255, 255, 255, 0.1),
-    inset 0 -5px 15px rgba(0, 0, 0, 0.7);
+    0 30px 60px -12px rgba(0, 0, 0, 0.9),
+    inset 0 2px 8px rgba(255, 255, 255, 0.3),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.8);
   display: flex;
   flex-direction: column;
-  padding: 25px;
+  padding: 15px; /* Tighter containment */
   position: relative;
 }
 
@@ -267,22 +267,33 @@ body {
 /* Macro View Legend */
 .galaxy-legend { display: flex; gap: 20px; font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-dim); padding-top: 10px; justify-content: center; }
 
-/* --- CCTV CARGO FEED (Monitor 5) --- */
-.cctv-panel { display: flex; flex-direction: column; height: 100%; background: #010409; border: 2px solid #166534; border-radius: 6px; box-shadow: inset 0 0 30px rgba(22, 101, 52, 0.2); }
-.cctv-header { display: flex; justify-content: space-between; align-items: center; background: #14532d; color: var(--crt-green); padding: 8px 15px; font-family: var(--font-mono); font-weight: bold; letter-spacing: 1px; font-size: 0.9rem; }
+/* --- 21ST CENTURY CARGO HOLD (Monitor 5) --- */
+.cctv-panel { display: flex; flex-direction: column; height: 100%; background: #020617; border: 2px solid #334155; border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); position: relative;}
+.cctv-header { display: flex; justify-content: space-between; align-items: center; background: #0f172a; color: #38bdf8; padding: 8px 15px; font-family: var(--font-mono); font-weight: bold; letter-spacing: 1px; font-size: 0.9rem; border-bottom: 1px solid #1e293b;}
 .cctv-screen { 
   flex: 1; 
   position: relative; 
   overflow: hidden; 
-  background-color: #042f1a;
-  /* Tactical Night Vision Filter */
-  filter: sepia(1) hue-rotate(70deg) saturate(2.5) contrast(1.2) brightness(0.95); 
-  background-image: 
-    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%), 
-    linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-  background-size: 100% 6px, 6px 100%;
+  background: url('./cargo_bg.png') no-repeat center center;
+  background-size: cover;
+  animation: lightsFlicker 25s infinite steps(1, end);
 }
-.cctv-footer { display: flex; justify-content: space-between; padding: 8px 15px; background: #14532d; color: var(--crt-green); font-family: var(--font-mono); font-size: 0.85rem; }
+/* Modern atmospheric vignette overlay */
+.cctv-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(0,0,0,0) 50%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
+}
+.cctv-footer { display: flex; justify-content: space-between; padding: 8px 15px; background: #0f172a; color: #94a3b8; font-family: var(--font-mono); font-size: 0.85rem; border-top: 1px solid #1e293b;}
+
+@keyframes lightsFlicker {
+  0%, 94%, 96%, 98%, 100% { filter: brightness(1); }
+  95% { filter: brightness(0.6) contrast(1.2); }
+  97% { filter: brightness(0.8); }
+  99% { filter: brightness(0.7); }
+}
 
 /* Canvas backgrounds for matter container override */
 #cargoContainer canvas { background: transparent !important; width: 100%; height: 100%; }
@@ -344,24 +355,24 @@ body {
 
 /* --- HARDWARE CONTROLS RAIL (Bottom Switches) --- */
 .cockpit-controls-rail {
-  height: 90px;
+  height: 70px; /* Smaller physically */
   background: #0f172a;
-  border-top: 4px solid #334155;
-  margin-top: 15px;
-  border-radius: 8px;
+  border-top: 3px solid #475569;
+  margin-top: 10px;
+  border-radius: 6px;
   display: flex;
   flex-direction: column;
-  padding: 10px 15px;
+  padding: 8px 12px;
   position: relative;
-  box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+  box-shadow: inset 0 4px 10px rgba(0,0,0,0.6);
 }
 
-.rail-label { font-family: var(--font-mono); font-size: 0.65rem; color: #64748b; letter-spacing: 2px; margin-bottom: 8px; text-transform: uppercase; }
-.button-row { display: flex; gap: 10px; flex: 1; }
+.rail-label { font-family: var(--font-mono); font-size: 0.6rem; color: #475569; letter-spacing: 2px; margin-bottom: 4px; text-transform: uppercase; }
+.button-row { display: flex; gap: 8px; flex: 1; }
 
 .control-key {
   flex: 1;
-  background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+  background: linear-gradient(180deg, #334155 0%, #0f172a 100%);
   border: 1px solid #475569;
   border-radius: 4px;
   cursor: pointer;
@@ -369,14 +380,14 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 5px;
+  gap: 4px;
+  padding: 2px 5px;
   transition: all 0.1s;
-  box-shadow: 0 3px 0 #0f172a;
+  box-shadow: 0 2px 0 #020617;
 }
 
-.control-key span { font-family: var(--font-mono); font-size: 0.75rem; color: #94a3b8; font-weight: bold; text-transform: uppercase; }
-.btn-led { width: 16px; height: 5px; background: #475569; border-radius: 2px; transition: all 0.2s; box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); }
+.control-key span { font-family: var(--font-mono); font-size: 1.0rem; color: #cbd5e1; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; } /* Larger Font */
+.btn-led { width: 12px; height: 3px; background: #334155; border-radius: 1px; transition: all 0.2s; }
 
 .control-key:active { transform: translateY(2px); box-shadow: 0 1px 0 #0f172a; }
 
@@ -397,3 +408,130 @@ body {
   .payment-wall-grid { grid-template-columns: 1fr 1fr; }
   .settings-grid { grid-template-columns: 1fr; }
 }
+
+/* --- V4V HUD OVERLAYS (Astrogation v2.1) --- */
+#targetingDisplay {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(2, 6, 23, 0.85);
+  backdrop-filter: blur(6px);
+  border: 1px solid #38bdf8;
+  border-radius: 4px;
+  padding: 5px 20px;
+  font-family: var(--font-mono);
+  color: #38bdf8;
+  font-size: 0.85rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 50;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+}
+#targetingDisplay.visible { opacity: 1; }
+
+/* Help Tooltip Trigger Styling */
+.help-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: #334155;
+  border: 1px solid #64748b;
+  color: #94a3b8;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: bold;
+  cursor: help;
+  margin-left: 5px;
+  vertical-align: middle;
+  position: relative;
+}
+.help-trigger:hover { background: #38bdf8; border-color: #38bdf8; color: #000; }
+.help-trigger::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f172a;
+  border: 1px solid #38bdf8;
+  color: #fff;
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.2s;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+  font-family: var(--font-sans);
+  font-weight: normal;
+  z-index: 100;
+}
+.help-trigger:hover::after { opacity: 1; }
+
+/* Greyed out report button */
+#triggerReportBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: #334155;
+  color: #64748b;
+  background: #1e293b;
+  box-shadow: none;
+}
+
+/* Scan Preview Modal Dialog Window */
+#scanPreviewModal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid #38bdf8;
+  border-radius: 8px;
+  width: 400px;
+  padding: 20px;
+  color: #fff;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(56, 189, 248, 0.2);
+  z-index: 300;
+  display: none;
+  animation: popUp 0.25s ease-out;
+}
+#scanPreviewModal.visible { display: block; }
+.preview-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 8px; margin-bottom: 12px; }
+.preview-header h3 { font-family: var(--font-mono); color: #38bdf8; font-size: 1.1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 320px;}
+.preview-close { background: none; border: none; color: #64748b; font-size: 1.3rem; cursor: pointer; }
+.preview-close:hover { color: #ef4444; }
+.preview-body { font-size: 0.85rem; color: #94a3b8; line-height: 1.5; max-height: 150px; overflow-y: auto; margin-bottom: 15px; padding-right: 5px;}
+.preview-footer { display: flex; justify-content: center; gap: 10px; }
+
+/* V4V RADIO HUD WIDGET */
+#v4vRadioDeck {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  width: 240px;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(4px);
+  border: 1.5px solid #475569;
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  font-family: var(--font-mono);
+  z-index: 45;
+}
+.radio-info { margin-bottom: 8px; display: flex; gap: 8px; align-items: center; }
+.radio-viz { width: 12px; height: 12px; background: #4ade80; border-radius: 50%; animation: pulseViz 1.5s infinite ease-in-out; flex-shrink: 0; }
+@keyframes pulseViz { 0%, 100% { transform: scale(0.8); opacity: 0.4; } 50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 10px #4ade80; } }
+.radio-track-text { font-size: 0.7rem; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+.radio-artist-text { font-size: 0.6rem; color: #94a3b8; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.radio-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; border-top: 1px solid #334155; padding-top: 8px;}
+.radio-btn { background: #1e293b; border: 1px solid #475569; color: #cbd5e1; padding: 3px 6px; font-size: 0.65rem; border-radius: 3px; cursor: pointer; }
+.radio-btn:hover { background: #334155; border-color: #94a3b8; }
+.radio-btn.boost { background: linear-gradient(90deg, #ea580c 0%, #d97706 100%); border: none; color: #fff; font-weight: bold; padding: 3px 10px;}
+.radio-btn.boost:hover { transform: scale(1.05); }

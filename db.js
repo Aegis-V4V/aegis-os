@@ -116,8 +116,10 @@ function initDb() {
             key TEXT PRIMARY KEY,
             value TEXT
         )`, () => {
-            // Initialize default jackpot of 5000 if it doesn't exist
-            db.run("INSERT OR IGNORE INTO system_state (key, value) VALUES ('global_jackpot', '5000')");
+            // Initialize default jackpot of 0 SATS (Pure, non-fictional start)
+            db.run("INSERT OR IGNORE INTO system_state (key, value) VALUES ('global_jackpot', '0')");
+            // Migration: Safely reset any previous 5000 placeholder to 0
+            db.run("UPDATE system_state SET value = '0' WHERE key = 'global_jackpot' AND value = '5000'");
         });
 
         console.log("Database schema initialized.");

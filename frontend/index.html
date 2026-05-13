@@ -38,7 +38,7 @@
                 
                 <!-- Feed Targeting Control -->
                 <section class="panel terminal-panel">
-                  <div class="panel-header">[01] FEED TARGETING SYSTEM</div>
+                  <div class="panel-header">[01] FEED TARGETING SYSTEM <span class="help-trigger" data-tip="Link pilot ledger and scan RSS to compile fix-it compliance reports!">?</span></div>
                   <div class="input-group">
                     <input type="text" id="feedInput" placeholder="Enter RSS / Search Podcast Name..." autocomplete="off">
                     <button id="scanBtn" class="action-btn">ENGAGE SCAN</button>
@@ -277,6 +277,39 @@
             </div>
           </div>
 
+          <!-- TARGETING DISPLAY & MODAL OVERLAYS (Astrogation v2.1) -->
+          <div id="targetingDisplay">TARGETING: ---</div>
+          
+          <!-- V4V RADIO COCKPIT HUD -->
+          <div id="v4vRadioDeck">
+            <div class="radio-info">
+              <div class="radio-viz"></div>
+              <div>
+                <div id="radioTrack" class="radio-track-text">Initializing V4V Stream...</div>
+                <div id="radioArtist" class="radio-artist-text">Connecting Station</div>
+              </div>
+            </div>
+            <div class="radio-controls">
+              <button class="radio-btn" id="radioPlayBtn">PAUSE</button>
+              <button class="radio-btn" id="radioSkipBtn">SKIP</button>
+              <button class="radio-btn boost" id="radioBoostBtn">⚡ BOOST</button>
+            </div>
+          </div>
+
+          <!-- 3D SCAN PREVIEW MODAL POPUP -->
+          <div id="scanPreviewModal">
+            <div class="preview-header">
+              <h3 id="prevTitle">Warp Scan Target</h3>
+              <button class="preview-close" id="closePrevModal">&times;</button>
+            </div>
+            <div class="preview-body" id="prevBody">
+              Scanning adjacent sector node coordinates...
+            </div>
+            <div class="preview-footer">
+              <button id="engageWarpBtn" class="action-btn">ENGAGE WARP SCAN</button>
+            </div>
+          </div>
+
         </div> <!-- End Cockpit Screen -->
         
         <!-- HARDWARE BOTTOM CONTROLS RAIL -->
@@ -319,6 +352,7 @@
 
     <!-- SCRIPTS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script type="module" src="./main.js"></script>
     <script type="module" src="./star_chart.js"></script>

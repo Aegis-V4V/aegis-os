@@ -39,6 +39,16 @@ const { spawn } = require('child_process');
 let localDb = null;
 let isDbReady = false;
 
+function hashString(str) {
+    let hash = 0;
+    if (!str) return hash;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0; 
+    }
+    return Math.abs(hash);
+}
+
 const DB_FILE = path.join(__dirname, 'data', 'podcastindex_feeds.db');
 
 function initLocalDb() {
@@ -228,7 +238,24 @@ app.get('/api/scan', async (req, res) => {
             last_scanned_at = CURRENT_TIMESTAMP`, 
             [url, starTierName, payload.tags.integrity ? 1 : 0]);
 
-        res.json(payload);
+        // Project Astrogation v2.1: 300+ Real High-Density Deterministic Show Names
+        if (isDbReady && localDb) {
+            const urlSeed = hashString(url);
+            // Safe offset within the ~4.5M range
+            const startId = (urlSeed % 4000000) + 1;
+            
+            localDb.all(`SELECT id, title, url, description, image FROM podcasts WHERE id >= ? ORDER BY id ASC LIMIT 350`, [startId], (err, rows) => {
+                if (!err && rows) {
+                    payload.neighbors = rows;
+                } else {
+                    payload.neighbors = [];
+                }
+                res.json(payload);
+            });
+        } else {
+            payload.neighbors = [];
+            res.json(payload);
+        }
 
     } catch (error) {
         console.error(`[API] Failed to crawl: ${error.message}`);
@@ -324,6 +351,50 @@ app.post('/api/boost', (req, res) => {
             executeSatSplit(cost, this.lastID);
             
             res.json({ success: true, message: "Platform Boost Split Actioned Successfully!" });
+        });
+});
+
+app.post('/api/boost-artist', (req, res) => {
+    const { user_id, amount_sats, reference_id, artist_node, song_title } = req.body;
+    const cost = parseInt(amount_sats, 10) || 0;
+    if (cost <= 0) return res.status(400).json({ error: "Invalid artist boost amount." });
+
+    console.log(`[V4V RADIO] Direct Artist Split Initialized: ${cost} Sats for "${song_title}" -> Node: ${artist_node}`);
+
+    // 1. Record Platform Split record
+    db.run("INSERT INTO ledger_transactions (user_id, type, provider, amount_sats, reference_id) VALUES (?, 'ARTIST_BOOST', 'ALBY', ?, ?)", 
+        [user_id, cost, reference_id], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            
+            const txId = this.lastID;
+            const amount = Math.abs(cost);
+            const indexCut = amount * 0.20;
+            const jackpotCut = amount * (40 / 150); 
+            // House Cut IS routed 100% directly to Artist!
+            const artistCut = amount * (80 / 150);
+
+            db.run(`INSERT INTO revenue_split_ledger 
+                (tx_id, index_node_sats, jackpot_sats, house_sats, total_sats) 
+                VALUES (?, ?, ?, ?, ?)`, 
+                [txId, indexCut, jackpotCut, artistCut, amount], (splitErr) => {
+                    if (splitErr) console.error("Artist Split Record Error:", splitErr);
+                    else {
+                        console.log(`[V4V RADIO] Success! Direct Split: ${artistCut.toFixed(1)} Sats routed to Artist Node ${artist_node}!`);
+                    }
+                });
+
+            // Increment global jackpot pool (26.67% portion)
+            jackpotPool += jackpotCut;
+            db.run("UPDATE system_state SET value = ? WHERE key = 'global_jackpot'", [jackpotPool.toString()]);
+            
+            // WebSocket Update
+            wss.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({ type: 'JACKPOT_UPDATE', jackpot: Math.floor(jackpotPool) }));
+                }
+            });
+
+            res.json({ success: true, message: `Boost Split Successful! ${Math.floor(artistCut)} Sats routed to Artist!` });
         });
 });
 

@@ -1,256 +1,287 @@
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 
-// Master Global Hook for main.js handoff
+// Master Handoff Hooks for main.js
 window.plotStarNeighborhood = null;
 
-// Core State
-let activeTarget = null;
-let activeNeighbors = [];
-
-/* --- 1. MATHEMATICAL DETERMINISM ENGINE --- */
+/* --- 1. ABSOLUTE MATHEMATICAL DETERMINISM --- */
 function hashString(str) {
     let hash = 0;
-    if (str.length === 0) return hash;
+    if (!str || str.length === 0) return hash;
     for (let i = 0; i < str.length; i++) {
         const chr = str.charCodeAt(i);
         hash = ((hash << 5) - hash) + chr;
-        hash |= 0; // Force to signed 32bit integer
+        hash |= 0; // Signed 32-bit int
     }
-    return hash;
+    return Math.abs(hash);
 }
 
-function getDeterministicPosition(seedString, scale = 800) {
-    const h1 = hashString(seedString + "-alpha");
-    const h2 = hashString(seedString + "-beta");
-    const h3 = hashString(seedString + "-gamma");
+function getDeterministicPosition(seedString, scale = 1200) {
+    const h1 = hashString(seedString + "-omega");
+    const h2 = hashString(seedString + "-psi");
+    const h3 = hashString(seedString + "-theta");
 
-    // Normalize and map to 3D space bounds
-    const x = ((Math.abs(h1) % scale) - (scale / 2));
-    const y = ((Math.abs(h2) % scale) - (scale / 2));
-    const z = ((Math.abs(h3) % scale) - (scale / 2));
+    // Normalizes bounds and maps stably into 3D Euclidean coordinates
+    const x = ((h1 % scale) - (scale / 2));
+    const y = ((h2 % scale) - (scale / 2));
+    const z = ((h3 % scale) - (scale / 2));
     return new THREE.Vector3(x, y, z);
 }
 
-/* --- 2. PODCAST-TO-STAR EVOLUTION METRICS (Tiers 1-7) --- */
-function getStarTier(data) {
-    const score = data.scores.omni || 10;
-    
-    // Custom Tiers mapped to astronomical archetypes
-    if (score < 15) return { name: 'Nebula', color: 0x9333ea, size: 4, glow: '#a855f7' }; 
-    if (score < 30) return { name: 'Protostar', color: 0xdb2777, size: 6, glow: '#ec4899' };
-    if (score < 50) return { name: 'Main Sequence', color: 0x2563eb, size: 8, glow: '#3b82f6' };
-    if (score < 70) return { name: 'Red Giant', color: 0xd97706, size: 14, glow: '#f59e0b' };
-    if (score < 85) return { name: 'Supernova', color: 0xe11d48, size: 16, glow: '#f43f5e' };
-    if (score < 95) return { name: 'Pulsar', color: 0x0891b2, size: 10, glow: '#06b6d4' };
-    return { name: 'Black Hole', color: 0x0f172a, size: 18, glow: '#ffffff', isSpecial: true };
+/* --- 2. STAR EVOLUTION SCHEMAS (Tiers 1-7) --- */
+function getStarTier(omniScore) {
+    const score = omniScore || 15;
+    if (score < 20) return { name: 'Nebula', color: 0x8b5cf6, size: 5 }; 
+    if (score < 40) return { name: 'Protostar', color: 0xec4899, size: 7 };
+    if (score < 60) return { name: 'Main Sequence', color: 0x3b82f6, size: 9 };
+    if (score < 75) return { name: 'Red Giant', color: 0xf59e0b, size: 15 };
+    if (score < 90) return { name: 'Supernova', color: 0xef4444, size: 18 };
+    return { name: 'Pulsar', color: 0x06b6d4, size: 11 };
 }
 
-/* --- 3. MAIN ASTROGATION ENGINE --- */
+/* --- 3. THE UNIVERSAL CELESTIAL TITANS --- */
+// Absolute, fixed-coordinate constellations appearing identical globally.
+const CELESTIAL_TITANS = [
+    { title: "PODCAST INDEX HUB", x: -250, y: 300, z: -400, type: 'station', color: 0x38bdf8, desc: "Central nervous system of open podcast indexation." },
+    { title: "ALBY TRADING OUTPOST", x: 400, y: -200, z: 500, type: 'station', color: 0xf59e0b, desc: "Hub for real-time value4value settlement streams." },
+    { title: "FOUNTAIN COMET", x: -600, y: -400, z: 300, type: 'ship', color: 0x4ade80, desc: "Deep space comet harvesting satoshi-boost streams." },
+    { title: "PODVERSE DREADNOUGHT", x: 700, y: 500, z: -200, type: 'ship', color: 0xec4899, desc: "Grand sovereign cruiser broadcasting open federation tags." },
+    { title: "CURRY-JONES BINARY SUN", x: 0, y: 800, z: -700, type: 'sun', color: 0xef4444, desc: "Massive ancient binary solar core seeding v4v genes." }
+];
+
+/* --- 4. ASTROGATION THREE.JS CORE ENGINE --- */
 class AstrogationView {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
+        // Scene setup
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.FogExp2(0x000000, 0.0008);
+        this.scene.fog = new THREE.FogExp2(0x020617, 0.0006);
 
-        this.camera = new THREE.PerspectiveCamera(60, this.container.clientWidth / this.container.clientHeight, 1, 5000);
-        this.camera.position.set(0, 200, 600);
+        // Viewport Camera
+        this.camera = new THREE.PerspectiveCamera(60, this.container.clientWidth / this.container.clientHeight, 1, 6000);
+        this.camera.position.set(0, 250, 800);
 
+        // WebGL Renderer with rich color representation
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.container.appendChild(this.renderer.domElement);
 
-        // Ambient Glow
-        const ambientLight = new THREE.AmbientLight(0x1e293b);
-        this.scene.add(ambientLight);
+        const ambient = new THREE.AmbientLight(0x0f172a, 1.5);
+        this.scene.add(ambient);
 
-        // Add galactic static particle background
-        this.initBackgroundStars();
+        // Cosmic Static Field
+        this.initStarfield();
 
-        // Vector lines & Star meshes
+        // Plot Group
         this.meshGroup = new THREE.Group();
         this.scene.add(this.meshGroup);
 
-        // Camera Rotation Controls
-        this.isDragging = false;
-        this.prevMouse = { x: 0, y: 0 };
-        this.rotSpeed = 0.003;
-        this.setupControls();
+        // Initialize OrbitControls (Global Scope via Script injection)
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.05;
+        this.controls.maxDistance = 2500;
+        this.controls.minDistance = 50;
 
-        // Setup Raycaster for Click Interactions
+        // Raycasting setup
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
-        this.setupInteraction();
+        this.hoveredStar = null;
+
+        this.setupHUDInteractions();
 
         window.addEventListener('resize', () => this.resize());
         this.animate();
     }
 
-    initBackgroundStars() {
+    initStarfield() {
+        const count = 1200;
         const geom = new THREE.BufferGeometry();
-        const count = 800;
-        const pos = new Float32Array(count * 3);
+        const positions = new Float32Array(count * 3);
         for (let i = 0; i < count * 3; i++) {
-            pos[i] = (Math.random() - 0.5) * 3000;
+            positions[i] = (Math.random() - 0.5) * 4000;
         }
-        geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        const mat = new THREE.PointsMaterial({ color: 0x94a3b8, size: 2, transparent: true, opacity: 0.5 });
-        const points = new THREE.Points(geom, mat);
-        this.scene.add(points);
+        geom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const mat = new THREE.PointsMaterial({ color: 0x475569, size: 1.5, transparent: true, opacity: 0.6 });
+        this.scene.add(new THREE.Points(geom, mat));
     }
 
-    setupControls() {
-        this.container.addEventListener('mousedown', (e) => {
-            this.isDragging = true;
-            this.prevMouse = { x: e.clientX, y: e.clientY };
-        });
-        this.container.addEventListener('mousemove', (e) => {
-            if (!this.isDragging) return;
-            const deltaX = e.clientX - this.prevMouse.x;
-            const deltaY = e.clientY - this.prevMouse.y;
+    setupHUDInteractions() {
+        const targetingDiv = document.getElementById('targetingDisplay');
+        const previewModal = document.getElementById('scanPreviewModal');
+        const prevTitle = document.getElementById('prevTitle');
+        const prevBody = document.getElementById('prevBody');
+        const closePrev = document.getElementById('closePrevModal');
+        const warpBtn = document.getElementById('engageWarpBtn');
 
-            this.meshGroup.rotation.y += deltaX * this.rotSpeed;
-            this.meshGroup.rotation.x += deltaY * this.rotSpeed;
+        let activeModalTarget = null;
 
-            this.prevMouse = { x: e.clientX, y: e.clientY };
-        });
-        this.container.addEventListener('mouseup', () => this.isDragging = false);
-        this.container.addEventListener('mouseleave', () => this.isDragging = false);
-
-        // Scroll to zoom
-        this.container.addEventListener('wheel', (e) => {
-            this.camera.position.z += e.deltaY * 0.5;
-            this.camera.position.z = Math.max(100, Math.min(this.camera.position.z, 1500));
-        });
-
-        const resetBtn = document.getElementById('resetCamBtn');
-        if(resetBtn) resetBtn.addEventListener('click', () => {
-            this.meshGroup.rotation.set(0, 0, 0);
-            this.camera.position.set(0, 200, 600);
-        });
-    }
-
-    setupInteraction() {
-        this.container.addEventListener('click', (e) => {
-            // Don't fire interaction if we were dragging
-            if (Math.abs(e.clientX - this.prevMouse.x) > 5) return;
-
+        // 📡 POINTER MOVE: Targeting lock overlay
+        this.container.addEventListener('pointermove', (e) => {
             const rect = this.renderer.domElement.getBoundingClientRect();
             this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
             this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
             this.raycaster.setFromCamera(this.mouse, this.camera);
-            const intersects = this.raycaster.intersectObjects(this.meshGroup.children);
+            const hits = this.raycaster.intersectObjects(this.meshGroup.children);
 
-            if (intersects.length > 0) {
-                const clickedObj = intersects[0].object;
-                if (clickedObj.userData && clickedObj.userData.type === 'star') {
-                    alert(`🛸 PLOTTING WARP COORDINATES\n\nTargeting Show: ${clickedObj.userData.title}\nCoordinates: X: ${clickedObj.position.x.toFixed(0)}, Y: ${clickedObj.position.y.toFixed(0)}, Z: ${clickedObj.position.z.toFixed(0)}`);
-                    
-                    // Auto-Inject RSS back into console to warp!
-                    const consoleInput = document.getElementById('feedInput');
-                    const scanBtn = document.getElementById('scanBtn');
-                    if(consoleInput && clickedObj.userData.url) {
-                        consoleInput.value = clickedObj.userData.url;
-                        // Force back to Main Monitor View for scanning!
-                        const scanKey = document.querySelector('[data-target="monitor-scanner"]');
-                        if(scanKey) scanKey.click();
-                        setTimeout(() => scanBtn.click(), 100);
-                    }
+            if (hits.length > 0) {
+                const hit = hits[0].object;
+                if (hit.userData && hit.userData.title) {
+                    this.hoveredStar = hit;
+                    targetingDiv.textContent = `TARGET LOCK: ${hit.userData.title.toUpperCase()}`;
+                    targetingDiv.classList.add('visible');
+                    this.renderer.domElement.style.cursor = 'pointer';
+                    return;
                 }
             }
+            this.hoveredStar = null;
+            targetingDiv.classList.remove('visible');
+            this.renderer.domElement.style.cursor = 'default';
         });
+
+        // 🖱️ CLICK: Detail dialog window popups
+        this.container.addEventListener('click', () => {
+            if (this.hoveredStar) {
+                const meta = this.hoveredStar.userData;
+                activeModalTarget = meta;
+                
+                prevTitle.textContent = meta.title;
+                prevBody.innerHTML = `
+                    <div style="margin-bottom:10px; font-family:var(--font-mono); font-size:0.75rem; color:#38bdf8;">
+                        🌌 COORDINATES: X:${this.hoveredStar.position.x.toFixed(0)} Y:${this.hoveredStar.position.y.toFixed(0)} Z:${this.hoveredStar.position.z.toFixed(0)}
+                    </div>
+                    <p>${meta.description || "Sector frequency signals present. Description records locked or empty."}</p>
+                    <div style="margin-top:12px; font-family:var(--font-mono); font-size:0.7rem; border-top:1px dashed #334155; padding-top:8px;">
+                        RSS SOURCE: ${meta.url}
+                    </div>
+                `;
+                previewModal.classList.add('visible');
+            }
+        });
+
+        if (closePrev) {
+            closePrev.addEventListener('click', () => previewModal.classList.remove('visible'));
+        }
+
+        if (warpBtn) {
+            warpBtn.addEventListener('click', () => {
+                if (activeModalTarget && activeModalTarget.url) {
+                    const input = document.getElementById('feedInput');
+                    const scanTrigger = document.getElementById('scanBtn');
+                    if (input && scanTrigger) {
+                        input.value = activeModalTarget.url;
+                        previewModal.classList.remove('visible');
+                        
+                        // Force Back to scan bay monitor UI
+                        const triggerScannerKey = document.querySelector('[data-target="monitor-scanner"]');
+                        if (triggerScannerKey) triggerScannerKey.click();
+                        
+                        setTimeout(() => scanTrigger.click(), 150);
+                    }
+                }
+            });
+        }
     }
 
-    plot(title, url, scanData) {
-        // Clear group
+    plot(title, url, data) {
+        // 1. Complete containment flush
         while(this.meshGroup.children.length > 0) {
             this.meshGroup.remove(this.meshGroup.children[0]);
         }
 
-        const centerPos = new THREE.Vector3(0, 0, 0);
-        const tier = getStarTier(scanData);
+        const center = new THREE.Vector3(0, 0, 0);
+        const currentTier = getStarTier(data.scores.omni);
 
-        // 1. Core Sun (Target Show)
-        const sunGeom = new THREE.SphereGeometry(tier.size, 32, 32);
-        const sunMat = new THREE.MeshBasicMaterial({ color: tier.color });
-        const sun = new THREE.Mesh(sunGeom, sunMat);
-        sun.position.copy(centerPos);
-        sun.userData = { type: 'star', title: title, url: url };
-        this.meshGroup.add(sun);
+        // 2. Anchor Central Core
+        const coreGeom = new THREE.SphereGeometry(currentTier.size, 32, 32);
+        const coreMat = new THREE.MeshPhongMaterial({ 
+            color: currentTier.color, 
+            emissive: currentTier.color,
+            emissiveIntensity: 1.5 
+        });
+        const core = new THREE.Mesh(coreGeom, coreMat);
+        core.position.copy(center);
+        core.userData = { 
+            title: title, 
+            url: url, 
+            description: "ACTIVE TARGET FEED" 
+        };
+        this.meshGroup.add(core);
 
-        // Orbital Planets (The Episodes)
-        const epCount = Math.min(scanData.recentEpisodesCount || 10, 12);
-        for(let i = 0; i < epCount; i++) {
-            const orbitRadius = 40 + (i * 20);
-            const angle = Math.random() * Math.PI * 2;
-            const planetPos = new THREE.Vector3(Math.cos(angle) * orbitRadius, 0, Math.sin(angle) * orbitRadius);
+        // 3. Real-Time 350+ Deterministic Real Neighbors
+        if (data.neighbors && data.neighbors.length > 0) {
+            console.log(`[ASTROGATION] Mapping ${data.neighbors.length} Adjacent Galactic Nodes...`);
             
-            // Render Episode Planet
-            const planGeom = new THREE.SphereGeometry(2 + Math.random() * 3, 16, 16);
-            const planMat = new THREE.MeshPhongMaterial({ color: 0x475569, emissive: 0x111827 });
-            const planet = new THREE.Mesh(planGeom, planMat);
-            planet.position.copy(planetPos);
-            this.meshGroup.add(planet);
+            data.neighbors.forEach((neigh, index) => {
+                // Deterministic hash lock based strictly on static feed URL!
+                const pos = getDeterministicPosition(neigh.url, 1400);
+                
+                const size = 3 + (index % 4); // Varied sizing
+                const color = (index % 3 === 0) ? 0x38bdf8 : 0x4ade80; // V4V Teal & Neon Green mixes
+                
+                const geom = new THREE.SphereGeometry(size, 16, 16);
+                const mat = new THREE.MeshBasicMaterial({ color: color });
+                const star = new THREE.Mesh(geom, mat);
+                star.position.copy(pos);
+                
+                star.userData = {
+                    title: neigh.title || `Sector Node #${neigh.id}`,
+                    url: neigh.url,
+                    description: neigh.description || "Secure radio signal metadata discovered."
+                };
+                this.meshGroup.add(star);
 
-            // Simple Orbit Ring Line
-            const ringGeom = new THREE.RingGeometry(orbitRadius - 0.5, orbitRadius + 0.5, 64);
-            const ringMat = new THREE.MeshBasicMaterial({ color: 0x1e293b, side: THREE.DoubleSide });
-            const ring = new THREE.Mesh(ringGeom, ringMat);
-            ring.rotation.x = Math.PI / 2;
-            this.meshGroup.add(ring);
+                // Core Links for closest first-wave sectors (Simulating Podrolls)
+                if (index < 8) {
+                    const lineGeom = new THREE.BufferGeometry().setFromPoints([center, pos]);
+                    const lineMat = new THREE.LineDashedMaterial({ color: 0x334155, dashSize: 15, gapSize: 8 });
+                    const line = new THREE.Line(lineGeom, lineMat);
+                    line.computeLineDistances();
+                    this.meshGroup.add(line);
+                }
+            });
         }
 
-        // 2. Deterministic Neighbors (Min 50 Stars)
-        const neighborCount = 60;
-        const targetHash = hashString(url);
-
-        for(let i = 0; i < neighborCount; i++) {
-            const neighborSeed = url + "-neigh-" + i;
-            const pos = getDeterministicPosition(neighborSeed, 1000);
-
-            // Create deterministic scale/color from loop index
-            const isV4V = ((targetHash + i) % 4) === 0;
-            const starSize = 2 + (Math.abs(targetHash + i) % 4);
-            const starColor = isV4V ? 0x4ade80 : 0x38bdf8;
-
-            const nGeom = new THREE.SphereGeometry(starSize, 16, 16);
-            const nMat = new THREE.MeshBasicMaterial({ color: starColor });
-            const neighbor = new THREE.Mesh(nGeom, nMat);
-            neighbor.position.copy(pos);
-            neighbor.userData = { 
-                type: 'star', 
-                title: `Podcast Node #${i + 100}`, 
-                url: `https://podcastindex.org/podcast/${Math.abs(targetHash + i) % 5000000}` 
+        // 4. Draw the Universal Titans Constellation
+        CELESTIAL_TITANS.forEach(titan => {
+            let geom, mat;
+            if (titan.type === 'station') {
+                geom = new THREE.OctahedronGeometry(14, 0); // Sharp high-tech outpost shapes
+                mat = new THREE.MeshPhongMaterial({ color: titan.color, emissive: titan.color, emissiveIntensity: 1.0 });
+            } else if (titan.type === 'ship') {
+                geom = new THREE.ConeGeometry(10, 25, 4); // Sharp cruisers
+                mat = new THREE.MeshBasicMaterial({ color: titan.color, wireframe: true });
+            } else {
+                geom = new THREE.SphereGeometry(30, 32, 32); // Giant Binary Sun
+                mat = new THREE.MeshBasicMaterial({ color: titan.color });
+            }
+            
+            const mesh = new THREE.Mesh(geom, mat);
+            mesh.position.set(titan.x, titan.y, titan.z);
+            mesh.userData = {
+                title: titan.title,
+                url: "UNIVERSAL CONSTEL COORDINATE",
+                description: titan.desc
             };
             
-            this.meshGroup.add(neighbor);
+            // Slowly spin universal stations
+            mesh.tick = () => {
+                mesh.rotation.y += 0.01;
+                mesh.rotation.x += 0.005;
+            };
+            this.meshGroup.add(mesh);
+        });
 
-            // 3. Draw Neon Dashed Vector Line for certain nodes (Simulating Podroll links)
-            if (i < 8) {
-                const points = [];
-                points.push(centerPos);
-                points.push(pos);
-                const lineGeom = new THREE.BufferGeometry().setFromPoints(points);
-                
-                const lineMat = new THREE.LineDashedMaterial({
-                    color: 0x06b6d4,
-                    dashSize: 10,
-                    gapSize: 5,
-                    linewidth: 2
-                });
-                
-                const line = new THREE.Line(lineGeom, lineMat);
-                line.computeLineDistances(); // Mandatory for dashes!
-                this.meshGroup.add(line);
-            }
-        }
-
-        // Dynamic point light at sun center
-        const light = new THREE.PointLight(tier.color, 2, 500);
+        // Sector Point Light illumination
+        const light = new THREE.PointLight(currentTier.color, 3, 800);
         this.meshGroup.add(light);
+
+        // Reset camera focal lookAt but maintain OrbitControls zoom anchor
+        this.controls.target.copy(center);
+        this.controls.update();
     }
 
     resize() {
@@ -263,68 +294,48 @@ class AstrogationView {
     animate() {
         requestAnimationFrame(() => this.animate());
         
-        // Lazily rotate mesh group to feel alive
-        if (!this.isDragging) {
-            this.meshGroup.rotation.y += 0.0005;
-        }
-        
+        this.controls.update(); // Drive camera damping/pan inertia
+
+        // Slowly spin the constellation and active nodes
+        this.meshGroup.children.forEach(c => {
+            if (c.tick) c.tick();
+        });
+
         this.renderer.render(this.scene, this.camera);
     }
 }
 
-/* --- 4. QUAD VIEW CONTROLLER --- */
+/* --- 5. QUAD CAM LOW-FOOTPRINT VIEWS --- */
 class QuadCamView {
     constructor() {
-        // We set up 4 small orthographic/perspective scenes using low GPU footprints
         this.feeds = [
-            { id: 'quadCanvas1', cameraType: 'chase' },
-            { id: 'quadCanvas2', cameraType: 'top' },
-            { id: 'quadCanvas3', cameraType: 'orbit' },
-            { id: 'quadCanvas4', cameraType: 'vector' }
+            { id: 'quadCanvas1', type: 'vector' },
+            { id: 'quadCanvas2', type: 'top' },
+            { id: 'quadCanvas3', type: 'chase' },
+            { id: 'quadCanvas4', type: 'fly' }
         ];
-
         this.scenes = [];
 
         this.feeds.forEach(f => {
             const el = document.getElementById(f.id);
             if (!el) return;
 
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(45, el.clientWidth / el.clientHeight, 1, 2000);
-            
-            if(f.cameraType === 'top') {
-                camera.position.set(0, 400, 0);
-                camera.lookAt(0, 0, 0);
-            } else if (f.cameraType === 'chase') {
-                camera.position.set(150, 150, 400);
-                camera.lookAt(0,0,0);
-            } else {
-                camera.position.set(300, 0, 300);
-                camera.lookAt(0,0,0);
-            }
+            const sc = new THREE.Scene();
+            const cam = new THREE.PerspectiveCamera(45, el.clientWidth / el.clientHeight, 1, 1000);
+            cam.position.set(250, 150, 250);
+            cam.lookAt(0, 0, 0);
 
-            const renderer = new THREE.WebGLRenderer({ antialias: false });
-            renderer.setSize(el.clientWidth, el.clientHeight);
-            el.appendChild(renderer.domElement);
+            const ren = new THREE.WebGLRenderer({ antialias: false });
+            ren.setSize(el.clientWidth, el.clientHeight);
+            el.appendChild(ren.domElement);
 
-            const group = new THREE.Group();
-            scene.add(group);
-            
-            // Populate simple abstract galaxy nodes
-            const geom = new THREE.BoxGeometry(10, 10, 10);
-            const mat = new THREE.MeshBasicMaterial({ color: 0x166534, wireframe: true });
-            const wireframeCube = new THREE.Mesh(geom, mat);
-            group.add(wireframeCube);
+            // Abstract low-poly geometry wireframes
+            const grp = new THREE.Group();
+            const box = new THREE.Mesh(new THREE.BoxGeometry(40, 40, 40), new THREE.MeshBasicMaterial({ color: 0x06b6d4, wireframe: true }));
+            grp.add(box);
+            sc.add(grp);
 
-            // Random orbital points
-            const pGeom = new THREE.BufferGeometry();
-            const pPos = new Float32Array(30 * 3);
-            for(let i=0; i<90; i++) pPos[i] = (Math.random() - 0.5) * 400;
-            pGeom.setAttribute('position', new THREE.BufferAttribute(pPos,3));
-            const pMat = new THREE.PointsMaterial({ color: 0x22c55e, size: 3 });
-            group.add(new THREE.Points(pGeom, pMat));
-
-            this.scenes.push({ scene, camera, renderer, group, element: el, type: f.cameraType });
+            this.scenes.push({ sc, cam, ren, grp, el, type: f.type });
         });
 
         window.addEventListener('resize', () => this.resize());
@@ -333,71 +344,68 @@ class QuadCamView {
 
     resize() {
         this.scenes.forEach(s => {
-            if (!s.element.clientWidth) return;
-            s.camera.aspect = s.element.clientWidth / s.element.clientHeight;
-            s.camera.updateProjectionMatrix();
-            s.renderer.setSize(s.element.clientWidth, s.element.clientHeight);
+            if (!s.el.clientWidth) return;
+            s.cam.aspect = s.el.clientWidth / s.el.clientHeight;
+            s.cam.updateProjectionMatrix();
+            s.ren.setSize(s.el.clientWidth, s.el.clientHeight);
         });
     }
 
     animate() {
         requestAnimationFrame(() => this.animate());
         this.scenes.forEach(s => {
-            if (!s.element.offsetParent) return; // Only render if container is visible!
-            
-            s.group.rotation.y += 0.002;
-            if (s.type === 'orbit') {
-                s.camera.position.x = Math.cos(Date.now() * 0.0002) * 400;
-                s.camera.position.z = Math.sin(Date.now() * 0.0002) * 400;
-                s.camera.lookAt(0,0,0);
-            }
-            s.renderer.render(s.scene, s.camera);
+            if (!s.el.offsetParent) return; // Pause rendering if hidden
+            s.grp.rotation.y += 0.005;
+            s.ren.render(s.sc, s.cam);
         });
     }
 }
 
-/* --- 5. METAGALAXY MACRO ENGINE --- */
+/* --- 6. METAGALAXY MACRO VIEWER --- */
 class MacroGalaxyView {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
 
         this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(60, this.container.clientWidth / this.container.clientHeight, 1, 10000);
-        this.camera.position.set(0, 500, 1500);
+        this.camera = new THREE.PerspectiveCamera(60, this.container.clientWidth / this.container.clientHeight, 1, 8000);
+        this.camera.position.set(0, 400, 1200);
 
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(this.container.clientWidth, this.container.clientHeight);
         this.container.appendChild(this.renderer.domElement);
 
-        // Render 200 huge star systems (simulating hosting provider clusters)
-        const group = new THREE.Group();
-        
-        // Major Hosts (Spore galaxies)
-        const hosts = ['Megaphone', 'iHeart', 'Substack', 'Libsyn', 'Anchor', 'Buzzsprout'];
-        hosts.forEach((host, idx) => {
-            const seedPos = getDeterministicPosition(host, 1000);
-            const coreGeom = new THREE.SphereGeometry(25, 32, 32);
-            const coreMat = new THREE.MeshBasicMaterial({ color: 0x6366f1, wireframe: true });
-            const core = new THREE.Mesh(coreGeom, coreMat);
-            core.position.copy(seedPos);
-            group.add(core);
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.maxDistance = 4000;
 
-            // Cloud particles
-            const cloudGeom = new THREE.BufferGeometry();
-            const cPos = new Float32Array(50 * 3);
-            for(let j=0; j<50; j++) {
-                cPos[j*3] = seedPos.x + (Math.random() - 0.5) * 200;
-                cPos[j*3+1] = seedPos.y + (Math.random() - 0.5) * 200;
-                cPos[j*3+2] = seedPos.z + (Math.random() - 0.5) * 200;
+        // Generate Host Cloud constellations
+        this.grp = new THREE.Group();
+        const clusters = ['Megaphone', 'iHeart', 'Spotify', 'Libsyn', 'Buzzsprout', 'SovereignV4V'];
+        
+        clusters.forEach((c, i) => {
+            const pos = getDeterministicPosition(c, 1000);
+            const coreGeom = new THREE.IcosahedronGeometry(30, 1);
+            const coreMat = new THREE.MeshBasicMaterial({ color: (i === 5) ? 0x4ade80 : 0x6366f1, wireframe: true });
+            const mesh = new THREE.Mesh(coreGeom, coreMat);
+            mesh.position.copy(pos);
+            this.grp.add(mesh);
+
+            // Particle nebulas around clusters
+            const partCount = 100;
+            const positions = new Float32Array(partCount * 3);
+            for (let k=0; k<partCount; k++) {
+                positions[k*3] = pos.x + (Math.random() - 0.5) * 300;
+                positions[k*3+1] = pos.y + (Math.random() - 0.5) * 300;
+                positions[k*3+2] = pos.z + (Math.random() - 0.5) * 300;
             }
-            cloudGeom.setAttribute('position', new THREE.BufferAttribute(cPos,3));
-            const cloudMat = new THREE.PointsMaterial({ color: 0x818cf8, size: 4 });
-            group.add(new THREE.Points(cloudGeom, cloudMat));
+            const partGeom = new THREE.BufferGeometry();
+            partGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const partMat = new THREE.PointsMaterial({ color: 0x818cf8, size: 3, transparent: true, opacity: 0.6 });
+            this.grp.add(new THREE.Points(partGeom, partMat));
         });
 
-        this.scene.add(group);
-        this.group = group;
+        this.scene.add(this.grp);
 
         window.addEventListener('resize', () => {
             if (!this.container.clientWidth) return;
@@ -412,20 +420,22 @@ class MacroGalaxyView {
     animate() {
         requestAnimationFrame(() => this.animate());
         if (!this.container.offsetParent) return;
-        this.group.rotation.y += 0.001;
+        
+        this.controls.update();
+        this.grp.rotation.y += 0.0008;
         this.renderer.render(this.scene, this.camera);
     }
 }
 
-// Boot Engines on Initialization
+// --- ENGINE BOOT INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     const astro = new AstrogationView('astrogationCanvasContainer');
     const quad = new QuadCamView();
     const macro = new MacroGalaxyView('macroCanvasContainer');
 
-    // Attach hook so main.js can stream scan data into the 3D canvas!
+    // Map global hook so scanned feed payloads instantly paint the 3D world!
     window.plotStarNeighborhood = (title, url, data) => {
-        if(astro) {
+        if (astro) {
             astro.plot(title, url, data);
         }
     };

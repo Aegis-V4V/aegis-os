@@ -6,9 +6,9 @@ const Engine = Matter.Engine,
 
 const container = document.getElementById('cargoContainer');
 
-// Initialize Engine with lazy Low Gravity for zero-g drift feel
+// 🛰️ TRUE ZERO-GRAVITY ENGINE CALIBRATION
 const engine = Engine.create();
-engine.world.gravity.y = 0.05; // Slight sink
+engine.world.gravity.y = 0; // Complete weightlessness!
 engine.world.gravity.x = 0;
 
 const render = Render.create({
@@ -22,7 +22,7 @@ const render = Render.create({
     }
 });
 
-// High-visibility industrial containment barriers
+// 🛸 Atmospheric Force-Field Walls
 const wallOptions = { isStatic: true, render: { visible: false } };
 let ground = Bodies.rectangle(400, 410, 1200, 20, wallOptions);
 let leftWall = Bodies.rectangle(-10, 200, 20, 600, wallOptions);
@@ -47,29 +47,24 @@ function rebuildWalls() {
 
     Composite.remove(engine.world, [ground, leftWall, rightWall, topWall]);
 
-    ground = Bodies.rectangle(width / 2, height + 10, width * 2, 20, wallOptions);
-    leftWall = Bodies.rectangle(-10, height / 2, 20, height * 2, wallOptions);
-    rightWall = Bodies.rectangle(width + 10, height / 2, 20, height * 2, wallOptions);
-    topWall = Bodies.rectangle(width / 2, -10, width * 2, 20, wallOptions);
+    ground = Bodies.rectangle(width / 2, height + 15, width * 2, 30, wallOptions);
+    leftWall = Bodies.rectangle(-15, height / 2, 30, height * 2, wallOptions);
+    rightWall = Bodies.rectangle(width + 15, height / 2, 30, height * 2, wallOptions);
+    topWall = Bodies.rectangle(width / 2, -15, width * 2, 30, wallOptions);
 
     Composite.add(engine.world, [ground, leftWall, rightWall, topWall]);
 }
 
 window.addEventListener('resize', rebuildWalls);
-// Trigger initial containment build after layout renders
 setTimeout(rebuildWalls, 500);
 
-// Dynamic Visual Memory Capping
-let VISUAL_CAP = 100;
-if (navigator.connection && navigator.connection.downlink) {
-    const speed = navigator.connection.downlink;
-    if (speed < 2) VISUAL_CAP = 40;
-    else if (speed > 10) VISUAL_CAP = 150;
-}
-console.log(`[CARGO BAY] Containment grid restricted to: ${VISUAL_CAP} Active Blobs.`);
-
+// Caps active blobs for performance
+let VISUAL_CAP = 80;
 let activeBags = [];
 let truePopulation = 0;
+
+// List of 5 Airlock Gates
+const AIRLOCKS = ['TOP', 'BOTTOM', 'LEFT', 'RIGHT', 'REAR'];
 
 function spawnCanvasBag(drop) {
     if (activeBags.length >= VISUAL_CAP) {
@@ -77,57 +72,124 @@ function spawnCanvasBag(drop) {
         Composite.remove(engine.world, oldBag);
     }
 
-    const canvasWidth = render.canvas.width || 800;
-    const startX = Math.random() * (canvasWidth - 100) + 50;
-    const startY = -50; // Drop through atmospheric intake
-    
-    const size = 25 + Math.random() * 20; 
-    
-    // Phosphor Green tints for CCTV nightvision aesthetics
+    const canvasW = render.canvas.width || 800;
+    const canvasH = render.canvas.height || 400;
+
+    // 1. Randomly select an Entrance Airlock
+    const gate = AIRLOCKS[Math.floor(Math.random() * AIRLOCKS.length)];
+    let startX, startY;
+    let forceX = 0, forceY = 0;
+    let scaleOnSpawn = 1.0;
+    let isRearEntry = false;
+
+    const baseSize = 35 + Math.random() * 15; // Large robust crates
+
+    // 2. Calculate Gate Position & Kickoff Vector
+    switch (gate) {
+        case 'TOP':
+            startX = Math.random() * (canvasW - 100) + 50;
+            startY = -40;
+            forceX = (Math.random() - 0.5) * 0.01;
+            forceY = 0.02 + Math.random() * 0.03;
+            break;
+        case 'BOTTOM':
+            startX = Math.random() * (canvasW - 100) + 50;
+            startY = canvasH + 40;
+            forceX = (Math.random() - 0.5) * 0.01;
+            forceY = -0.02 - Math.random() * 0.03;
+            break;
+        case 'LEFT':
+            startX = -40;
+            startY = Math.random() * (canvasH - 100) + 50;
+            forceX = 0.02 + Math.random() * 0.03;
+            forceY = (Math.random() - 0.5) * 0.01;
+            break;
+        case 'RIGHT':
+            startX = canvasW + 40;
+            startY = Math.random() * (canvasH - 100) + 50;
+            forceX = -0.02 - Math.random() * 0.03;
+            forceY = (Math.random() - 0.5) * 0.01;
+            break;
+        case 'REAR':
+            // Enters from central deep station depth, inflates scale!
+            startX = canvasW / 2 + (Math.random() - 0.5) * 100;
+            startY = canvasH / 2 + (Math.random() - 0.5) * 60;
+            forceX = (Math.random() - 0.5) * 0.015;
+            forceY = (Math.random() - 0.5) * 0.015;
+            scaleOnSpawn = 0.15; // Start tiny
+            isRearEntry = true;
+            break;
+    }
+
+    // 3. High-Tech "Steamer Trunk" styling
+    // We'll use rounded boxes with high friction/drift
     const renderConfig = {
-        fillStyle: drop.isCompliant ? '#4ade80' : '#27272a', 
-        strokeStyle: drop.isCompliant ? '#22c55e' : '#52525b',
-        lineWidth: 2
+        fillStyle: drop.isCompliant ? '#0f172a' : '#1e293b',
+        strokeStyle: drop.isCompliant ? '#38bdf8' : '#64748b',
+        lineWidth: 3
     };
 
+    // Try embedding Cover Art directly on crate face
     if (drop.image) {
         renderConfig.sprite = {
             texture: drop.image,
-            xScale: (size * 2) / 300,
-            yScale: (size * 2) / 300
+            xScale: (baseSize * 2) / 300 * scaleOnSpawn,
+            yScale: (baseSize * 2) / 300 * scaleOnSpawn
         };
     }
 
-    let body;
-    if (drop.isCompliant) {
-        // Hexagonal stable pod for compliant feeds
-        body = Bodies.polygon(startX, startY, 6, size, {
-            frictionAir: 0.02,
-            restitution: 0.6,
-            render: renderConfig
-        });
-    } else {
-        // Crude crates for non-compliant/traditional feeds
-        body = Bodies.rectangle(startX, startY, size, size, {
-            chamfer: { radius: 4 },
-            frictionAir: 0.03,
-            restitution: 0.4, 
-            render: renderConfig
-        });
-    }
-    
-    body.podcastMeta = drop;
+    // 4. Construct the Physics Body
+    // Low frictionAir for persistent lazy floating
+    const body = Bodies.rectangle(startX, startY, baseSize * scaleOnSpawn, baseSize * scaleOnSpawn, {
+        chamfer: { radius: 6 },
+        frictionAir: 0.005, // Very low drift!
+        friction: 0.1,
+        restitution: 0.7, // Bouncy space trunks
+        render: renderConfig
+    });
 
-    // Inject lazy drift vectors
-    const forceX = (Math.random() - 0.5) * 0.03;
-    const forceY = Math.random() * 0.03; 
-    Matter.Body.applyForce(body, body.position, { x: forceX, y: forceY });
+    body.podcastMeta = drop;
+    body.targetScale = 1.0;
+    body.currentScale = scaleOnSpawn;
+    body.baseSize = baseSize;
+    body.isRearEntry = isRearEntry;
+
+    // Apply Initial Kickoff Thrust vector from airlock!
+    Matter.Body.applyForce(body, body.position, { x: forceX * 0.2, y: forceY * 0.2 });
     
+    // Add slight spin momentum
+    Matter.Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.05);
+
     Composite.add(engine.world, body);
     activeBags.push(body);
 }
 
-// Click interaction for CCTV inventory inspection
+// 🧬 Inflation Ticking for REAR entry scaling
+Matter.Events.on(engine, 'beforeUpdate', function() {
+    activeBags.forEach(b => {
+        if (b.isRearEntry && b.currentScale < b.targetScale) {
+            // Gradually scale trunk upward to simulate 3D flight from deep room background!
+            const growth = 0.04;
+            const prevScale = b.currentScale;
+            b.currentScale = Math.min(b.targetScale, b.currentScale + growth);
+            
+            const scaleFactor = b.currentScale / prevScale;
+            Matter.Body.scale(b, scaleFactor, scaleFactor);
+
+            // Also scale sprite if present
+            if (b.render.sprite) {
+                b.render.sprite.xScale = (b.baseSize * 2 / 300) * b.currentScale;
+                b.render.sprite.yScale = (b.baseSize * 2 / 300) * b.currentScale;
+            }
+            
+            if (b.currentScale >= b.targetScale) {
+                b.isRearEntry = false; // Scaling complete!
+            }
+        }
+    });
+});
+
+// Click interaction for Manifest Inspection
 const mouse = Matter.Mouse.create(render.canvas);
 const mouseConstraint = Matter.MouseConstraint.create(engine, {
     mouse: mouse,
@@ -139,15 +201,15 @@ Matter.Events.on(mouseConstraint, 'mousedown', function() {
     const clickedBody = mouseConstraint.body;
     if (clickedBody && clickedBody.podcastMeta) {
         const meta = clickedBody.podcastMeta;
-        alert(`INVENTORY MANIFEST:\n\nTitle: ${meta.title}\nURL: ${meta.url}\n\nStatus: ${meta.isCompliant ? 'COMPLIANT [V4V]' : 'TRADITIONAL'}`);
+        alert(`📦 SECURE CRATE INVENTORY\n\nTitle: ${meta.title}\nURL: ${meta.url}\n\nEngine Protocol: ${meta.isCompliant ? '✅ PODCASTING 2.0 ENABLED' : '❌ LEGACY PROTOCOL'}`);
     }
 });
 
-// EXPOSED GLOBAL HOOK: Subscribed directly to Cockpit Master Stream
+// CENTRAL WEBSOCKET HOOK: Ingest Live drops
 window.handleLiveDropPayload = (data) => {
     try {
         if (data.type === 'INITIAL_CARGO') {
-            console.log(`[CARGO BAY] Unloading ${data.cargo.length} accumulated daily records...`);
+            console.log(`[CARGO HOLD] Syncing ${data.cargo.length} station packages...`);
             const toSpawn = data.cargo.slice(-VISUAL_CAP);
             toSpawn.forEach(drop => spawnCanvasBag(drop));
             truePopulation = data.cargo.length;
@@ -155,13 +217,16 @@ window.handleLiveDropPayload = (data) => {
         }
         else if (data.type === 'DROP_BLOB') {
             data.drops.forEach(drop => {
-                spawnCanvasBag(drop);
+                // Space-out drops slightly to prevent collisions
+                setTimeout(() => {
+                    spawnCanvasBag(drop);
+                }, Math.random() * 1000);
                 truePopulation++;
             });
             if (window.updateHoldHUD) window.updateHoldHUD(truePopulation);
         } 
         else if (data.type === 'RESET_CARGO') {
-            console.warn("[CARGO BAY] Activating daily containment flush!");
+            console.warn("[CARGO HOLD] Flushing containment field!");
             Composite.clear(engine.world);
             Composite.add(engine.world, [ground, leftWall, rightWall, topWall, mouseConstraint]);
             activeBags = [];
@@ -169,9 +234,13 @@ window.handleLiveDropPayload = (data) => {
             if (window.updateHoldHUD) window.updateHoldHUD(0);
         }
     } catch (e) {
-        console.error("[CARGO ERR]", e);
+        console.error("[CARGO HOLD ERR]", e);
     }
 };
 
-// Bridge command manual payload test
-window.manualDrop = () => spawnCanvasBag({ title: 'Bridge Simulation Pod', isCompliant: Math.random() > 0.5, url: 'Simulation' });
+// Manual Bridge Propulsion Test
+window.manualDrop = () => spawnCanvasBag({ 
+    title: 'Station Container #' + Math.floor(Math.random()*1000), 
+    isCompliant: Math.random() > 0.4, 
+    url: 'Cargo Simulation Mode' 
+});

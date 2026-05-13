@@ -1,3 +1,5 @@
+import tokenAsset from './token.png';
+
 const Engine = Matter.Engine,
       Render = Matter.Render,
       Runner = Matter.Runner,
@@ -121,30 +123,42 @@ function spawnCanvasBag(drop) {
             break;
     }
 
-    // 3. High-Tech "Steamer Trunk" styling
-    // We'll use rounded boxes with high friction/drift
+    // 3. Cinematic Orb/Token physics
+    const isCompliant = drop.isCompliant;
     const renderConfig = {
-        fillStyle: drop.isCompliant ? '#0f172a' : '#1e293b',
-        strokeStyle: drop.isCompliant ? '#38bdf8' : '#64748b',
-        lineWidth: 3
+        fillStyle: isCompliant ? '#fbbf24' : '#334155', // Amber vs Slate
+        strokeStyle: isCompliant ? '#f59e0b' : '#1e293b',
+        lineWidth: 2
     };
 
-    // Try embedding Cover Art directly on crate face
-    if (drop.image) {
+    let activeDivisor = 300;
+
+    // Use the beautiful Podcasting 2.0 token sprite for compliant orbs
+    if (isCompliant) {
+        activeDivisor = 1024; // Higher resolution source
         renderConfig.sprite = {
-            texture: drop.image,
-            xScale: (baseSize * 2) / 300 * scaleOnSpawn,
-            yScale: (baseSize * 2) / 300 * scaleOnSpawn
+            texture: tokenAsset,
+            xScale: (baseSize * 2) / activeDivisor * scaleOnSpawn,
+            yScale: (baseSize * 2) / activeDivisor * scaleOnSpawn
         };
     }
 
-    // 4. Construct the Physics Body
-    // Low frictionAir for persistent lazy floating
-    const body = Bodies.rectangle(startX, startY, baseSize * scaleOnSpawn, baseSize * scaleOnSpawn, {
-        chamfer: { radius: 6 },
-        frictionAir: 0.005, // Very low drift!
-        friction: 0.1,
-        restitution: 0.7, // Bouncy space trunks
+    // Override with explicit podcast art if available
+    if (drop.image) {
+        activeDivisor = 300;
+        renderConfig.sprite = {
+            texture: drop.image,
+            xScale: (baseSize * 2) / activeDivisor * scaleOnSpawn,
+            yScale: (baseSize * 2) / activeDivisor * scaleOnSpawn
+        };
+    }
+
+    // 4. Construct Circular Space Orbs (Blobs)
+    // Lower friction for effortless space floating
+    const body = Bodies.circle(startX, startY, baseSize * scaleOnSpawn, {
+        frictionAir: 0.002, // Incredibly low zero-g damping!
+        friction: 0.05,
+        restitution: 0.85, // High spring/bounce
         render: renderConfig
     });
 
@@ -152,6 +166,7 @@ function spawnCanvasBag(drop) {
     body.targetScale = 1.0;
     body.currentScale = scaleOnSpawn;
     body.baseSize = baseSize;
+    body.originalDivisor = activeDivisor;
     body.isRearEntry = isRearEntry;
 
     // Apply Initial Kickoff Thrust vector from airlock!
@@ -176,10 +191,10 @@ Matter.Events.on(engine, 'beforeUpdate', function() {
             const scaleFactor = b.currentScale / prevScale;
             Matter.Body.scale(b, scaleFactor, scaleFactor);
 
-            // Also scale sprite if present
+            // Scale dynamically aligned with original source resolution
             if (b.render.sprite) {
-                b.render.sprite.xScale = (b.baseSize * 2 / 300) * b.currentScale;
-                b.render.sprite.yScale = (b.baseSize * 2 / 300) * b.currentScale;
+                b.render.sprite.xScale = (b.baseSize * 2 / b.originalDivisor) * b.currentScale;
+                b.render.sprite.yScale = (b.baseSize * 2 / b.originalDivisor) * b.currentScale;
             }
             
             if (b.currentScale >= b.targetScale) {

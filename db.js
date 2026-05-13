@@ -89,6 +89,37 @@ function initDb() {
             FOREIGN KEY(user_id) REFERENCES users(id)
         )`);
 
+        // --- Project Astrogation Mirror Tables ---
+        db.run(`CREATE TABLE IF NOT EXISTS podcast_metadata (
+            id INTEGER PRIMARY KEY,
+            feed_url TEXT UNIQUE,
+            star_tier TEXT,
+            star_coordinates TEXT, -- JSON representation of X,Y,Z
+            verified_status INTEGER DEFAULT 0,
+            platform_boosts INTEGER DEFAULT 0,
+            last_scanned_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        db.run(`CREATE TABLE IF NOT EXISTS revenue_split_ledger (
+            id INTEGER PRIMARY KEY,
+            tx_id INTEGER,
+            index_node_sats REAL,
+            jackpot_sats REAL,
+            house_sats REAL,
+            total_sats INTEGER,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(tx_id) REFERENCES ledger_transactions(id)
+        )`);
+
+        // Persistent System Variables (e.g. Global Jackpot pool)
+        db.run(`CREATE TABLE IF NOT EXISTS system_state (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )`, () => {
+            // Initialize default jackpot of 5000 if it doesn't exist
+            db.run("INSERT OR IGNORE INTO system_state (key, value) VALUES ('global_jackpot', '5000')");
+        });
+
         console.log("Database schema initialized.");
     });
 }

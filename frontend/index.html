@@ -8,170 +8,318 @@
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;700&display=swap" rel="stylesheet">
   </head>
   <body>
-    <div class="spaceship-dashboard">
-      <!-- HEADER -->
-      <header class="dashboard-header">
-        <h1>SPIDER // NAV-COM</h1>
-        <div class="status-indicator">SYSTEM: ONLINE</div>
-      </header>
-
-      <div class="dashboard-grid">
+    <div class="bridge-shell">
+      
+      <!-- HARDWARE SCREEN BEZEL -->
+      <div class="cockpit-bezel">
         
-        <!-- MAIN TERMINAL (Search / Input) -->
-        <section class="panel terminal-panel">
-          <div class="panel-header">FEED TARGETING SYSTEM</div>
-          <div class="input-group">
-            <input type="text" id="feedInput" placeholder="Enter RSS URL or Search Podcast Name..." autocomplete="off">
-            <button id="scanBtn">SCAN</button>
-            <button id="toggleAtlasBtn" class="btn-ln" style="margin-left:10px; background:#6366f1;">OPEN ATLAS</button>
-          </div>
-          <div id="searchResults" class="search-results hidden"></div>
-          
-          <div class="current-target" id="currentTargetDisplay">
-            <h3>TARGET: <span id="targetName" class="neon-text">AWAITING INPUT</span></h3>
-            <p id="targetUrl" class="dim-text">---</p>
-          </div>
-        </section>
+        <!-- CURVED CRT VISOR LAYER -->
+        <div class="cockpit-screen">
+          <div class="scanlines-overlay"></div>
+          <div class="screen-glow"></div>
 
-        <!-- GAUGES PANEL -->
-        <section class="panel gauges-panel">
-          <div class="panel-header">COMPLIANCE METRICS</div>
-          <div class="gauges-container">
-            <!-- Omni Score -->
-            <div class="gauge-wrapper">
-              <svg class="gauge" viewBox="0 0 100 100">
-                <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
-                <circle class="gauge-fill" id="omniGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-              </svg>
-              <div class="gauge-label">
-                <span id="omniText" class="gauge-value">0</span>
-                <span class="gauge-title">OMNI</span>
-              </div>
+          <!-- SYSTEM TOP HEADER -->
+          <header class="cockpit-header">
+            <div class="system-id">
+              <span class="blink">●</span> USS ASSAYER // NAV-COM v2.0
             </div>
+            <div class="jackpot-hud">
+              BOUNTY JACKPOT: <span id="bountyText" class="neon-green">0</span> SATS
+            </div>
+            <div class="system-clock" id="sysClock">00:00:00</div>
+          </header>
 
-            <!-- V4V Score -->
-            <div class="gauge-wrapper small-gauge">
-              <svg class="gauge" viewBox="0 0 100 100">
-                <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
-                <circle class="gauge-fill v4v-fill" id="v4vGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-              </svg>
-              <div class="gauge-label">
-                <span id="v4vText" class="gauge-value">0</span>
-                <span class="gauge-title">V4V</span>
-              </div>
-            </div>
-
-            <!-- Tech Score -->
-            <div class="gauge-wrapper small-gauge">
-              <svg class="gauge" viewBox="0 0 100 100">
-                <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
-                <circle class="gauge-fill tech-fill" id="techGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-              </svg>
-              <div class="gauge-label">
-                <span id="techText" class="gauge-value">0</span>
-                <span class="gauge-title">TECH</span>
-              </div>
-            </div>
+          <!-- CENTRAL VIEWPORTS CONTAINER (THE 7 MONITORS) -->
+          <main class="cockpit-viewports" id="viewportsContainer">
             
-            <!-- Community Score -->
-            <div class="gauge-wrapper small-gauge">
-              <svg class="gauge" viewBox="0 0 100 100">
-                <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
-                <circle class="gauge-fill com-fill" id="comGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-              </svg>
-              <div class="gauge-label">
-                <span id="comText" class="gauge-value">0</span>
-                <span class="gauge-title">SOCIAL</span>
+            <!-- MONITOR 1: SCANNER BAY (THE ORIGINAL DASHBOARD) -->
+            <div class="viewport-panel active" id="monitor-scanner">
+              <div class="grid-dash">
+                
+                <!-- Feed Targeting Control -->
+                <section class="panel terminal-panel">
+                  <div class="panel-header">[01] FEED TARGETING SYSTEM</div>
+                  <div class="input-group">
+                    <input type="text" id="feedInput" placeholder="Enter RSS / Search Podcast Name..." autocomplete="off">
+                    <button id="scanBtn" class="action-btn">ENGAGE SCAN</button>
+                  </div>
+                  <div id="searchResults" class="search-results hidden"></div>
+                  <div class="current-target">
+                    <h3>LOCK ON: <span id="targetName" class="neon-text">AWAITING SECTOR TARGET</span></h3>
+                    <p id="targetUrl" class="dim-text">---</p>
+                  </div>
+                </section>
+
+                <!-- Gauges -->
+                <section class="panel gauges-panel">
+                  <div class="panel-header">[02] COMPLIANCE LEVEL</div>
+                  <div class="gauges-container">
+                    <div class="gauge-wrapper">
+                      <svg class="gauge" viewBox="0 0 100 100">
+                        <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
+                        <circle class="gauge-fill" id="omniGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                      </svg>
+                      <div class="gauge-label"><span id="omniText" class="gauge-value">0</span><span class="gauge-title">OMNI</span></div>
+                    </div>
+                    <div class="gauge-wrapper small-gauge">
+                      <svg class="gauge" viewBox="0 0 100 100">
+                        <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
+                        <circle class="gauge-fill v4v-fill" id="v4vGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                      </svg>
+                      <div class="gauge-label"><span id="v4vText" class="gauge-value">0</span><span class="gauge-title">V4V</span></div>
+                    </div>
+                    <div class="gauge-wrapper small-gauge">
+                      <svg class="gauge" viewBox="0 0 100 100">
+                        <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
+                        <circle class="gauge-fill tech-fill" id="techGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                      </svg>
+                      <div class="gauge-label"><span id="techText" class="gauge-value">0</span><span class="gauge-title">TECH</span></div>
+                    </div>
+                    <div class="gauge-wrapper small-gauge">
+                      <svg class="gauge" viewBox="0 0 100 100">
+                        <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
+                        <circle class="gauge-fill com-fill" id="comGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                      </svg>
+                      <div class="gauge-label"><span id="comText" class="gauge-value">0</span><span class="gauge-title">SOCIAL</span></div>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- LED Sensors -->
+                <section class="panel led-panel">
+                  <div class="panel-header">[03] NAMESPACE TELEMETRY</div>
+                  <div class="led-grid">
+                    <div class="led-item"><div class="led bulb" id="led-value"></div><span>value</span></div>
+                    <div class="led-item"><div class="led bulb" id="led-valueRecipient"></div><span>valueRecipient</span></div>
+                    <div class="led-item"><div class="led bulb" id="led-valueTimeSplit"></div><span>valueTimeSplit</span></div>
+                    <div class="led-item"><div class="led bulb" id="led-person"></div><span>person</span></div>
+                    <div class="led-item"><div class="led bulb" id="led-transcript"></div><span>transcript</span></div>
+                    <div class="led-item"><div class="led bulb" id="led-chapters"></div><span>chapters</span></div>
+                    <div class="led-item"><div class="led bulb" id="led-locked"></div><span>locked</span></div>
+                    <div class="led-item"><div class="led bulb" id="led-podping"></div><span>podping</span></div>
+                    <div class="led-item"><div class="led bulb" id="led-integrity"></div><span>integrity</span></div>
+                    <div class="led-item"><div class="led bulb" id="led-podroll"></div><span>podroll</span></div>
+                    <div class="led-item"><div class="led bulb" id="led-socialInteract"></div><span>socialInteract</span></div>
+                    <div class="led-item"><div class="led bulb" id="led-funding"></div><span>funding</span></div>
+                  </div>
+                </section>
+
+                <!-- Verification & Token Actions -->
+                <section class="panel auth-panel">
+                  <div class="panel-header">[04] VERIFICATION BRIDGE</div>
+                  <div class="token-summary-inline">
+                    <span>Ledger Creds: <strong id="tokenBalanceInline" class="neon-text">0</strong> SATS</span>
+                    <button id="quickLoginBtn" class="pill-btn">CONNECT PILOT</button>
+                  </div>
+                  <div class="action-buttons-stack">
+                    <button class="btn-ln btn-verify" disabled>DEEP HASH VERIFY (1234 SATS)</button>
+                    <button class="btn-ln boost-btn">BOOST ASSAYER PLATFORM ⚡</button>
+                  </div>
+                  <p class="micro-text">Free scans remaining: <span id="freeScanCount">5</span></p>
+                </section>
+
               </div>
             </div>
 
-          </div>
-        </section>
-
-        <!-- LED BULB GRID -->
-        <section class="panel led-panel">
-          <div class="panel-header">NAMESPACE SENSORS</div>
-          <div class="led-grid">
-            <div class="led-item"><div class="led bulb" id="led-value"></div><span>value</span></div>
-            <div class="led-item"><div class="led bulb" id="led-valueRecipient"></div><span>valueRecipient</span></div>
-            <div class="led-item"><div class="led bulb" id="led-valueTimeSplit"></div><span>valueTimeSplit</span></div>
-            <div class="led-item"><div class="led bulb" id="led-person"></div><span>person</span></div>
-            <div class="led-item"><div class="led bulb" id="led-transcript"></div><span>transcript</span></div>
-            <div class="led-item"><div class="led bulb" id="led-chapters"></div><span>chapters</span></div>
-            <div class="led-item"><div class="led bulb" id="led-locked"></div><span>locked</span></div>
-            <div class="led-item"><div class="led bulb" id="led-podping"></div><span>podping</span></div>
-            <div class="led-item"><div class="led bulb" id="led-integrity"></div><span>integrity</span></div>
-            <div class="led-item"><div class="led bulb" id="led-podroll"></div><span>podroll</span></div>
-            <div class="led-item"><div class="led bulb" id="led-socialInteract"></div><span>socialInteract</span></div>
-            <div class="led-item"><div class="led bulb" id="led-funding"></div><span>funding</span></div>
-          </div>
-        </section>
-
-        <!-- LIGHTNING BAY -->
-        <section class="panel ln-panel">
-          <div class="panel-header">VERIFICATION CONTROLS</div>
-          <p class="dim-text">Basic XML Scan: <span style="color: #4ade80">FREE</span></p>
-          <div class="ln-buttons">
-            <button class="btn-ln" disabled title="Coming Soon">DEEP HASH VERIFY (1234 TOKENS)</button>
-            <button class="btn-ln boost-btn">BOOST ASSAYER ⚡</button>
-          </div>
-        </section>
-
-        <!-- ASSAYER WALLET & PAYMENT GRID -->
-        <section class="panel wallet-panel">
-          <div class="panel-header">ASSAYER WALLET & LEDGER</div>
-          <div class="wallet-display">
-            <img src="./token.png" alt="Podcasting 2.0 Token" class="arcade-token">
-            <div class="balance-info">
-              <h3>YOUR BALANCE</h3>
-              <p class="balance-amount"><span id="tokenBalance">0</span> <span class="neon-text">SATS</span></p>
+            <!-- MONITOR 2: ASTROGATION NEIGHBORHOOD (3D CHART) -->
+            <div class="viewport-panel" id="monitor-astrogation">
+              <div class="monitor-label">CAM 2: LOCAL NEIGHBORHOOD MAP</div>
+              <div class="astrogation-controls">
+                <span class="dim-text">VECTOR GRID ACTIVATED // CLICK STARS OR PODROLL VECTORS</span>
+                <button id="resetCamBtn" class="pill-btn">CENTER CAMERA</button>
+              </div>
+              <div class="render-container" id="astrogationCanvasContainer">
+                <!-- ThreeJS Injected Here -->
+              </div>
+              <div class="intersection-hud hidden" id="interHud">
+                <div class="hud-header">PLOTTING COURSE: SELECT VECTOR DIRECTION</div>
+                <div class="hud-options" id="interOptions"></div>
+              </div>
             </div>
-            <button id="loginBtn" class="btn-login">LOGIN (LNURL)</button>
-          </div>
-          
-          <div class="load-wallet-section">
-            <p class="dim-text">Load Tokens (1 SAT = 1 Token)</p>
-            <div class="payment-grid">
-              <button class="pay-btn btn-alby">Lightning (Alby)</button>
-              <button class="pay-btn btn-strike">Fiat (Strike API)</button>
-              <button class="pay-btn btn-paypal disabled" disabled>PayPal</button>
-              <button class="pay-btn btn-stripe disabled" disabled>Stripe</button>
-              <button class="pay-btn btn-cashapp disabled" disabled>CashApp</button>
-              <button class="pay-btn btn-opennode disabled" disabled>OpenNode</button>
+
+            <!-- MONITOR 3: EXTERNAL ARRAY (QUAD-VIEW CAMERAS) -->
+            <div class="viewport-panel" id="monitor-quadcam">
+              <div class="quad-grid">
+                <div class="cam-feed">
+                  <div class="feed-tag">CAM A // ISO CHASE</div>
+                  <div class="feed-viewport" id="quadCanvas1"></div>
+                </div>
+                <div class="cam-feed">
+                  <div class="feed-tag">CAM B // TOP DOWN</div>
+                  <div class="feed-viewport" id="quadCanvas2"></div>
+                </div>
+                <div class="cam-feed">
+                  <div class="feed-tag">CAM C // SECTOR ORBIT</div>
+                  <div class="feed-viewport" id="quadCanvas3"></div>
+                </div>
+                <div class="cam-feed">
+                  <div class="feed-tag">CAM D // VECTOR CHART</div>
+                  <div class="feed-viewport" id="quadCanvas4"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MONITOR 4: GALAXY OVERVIEW (MACRO MAP) -->
+            <div class="viewport-panel" id="monitor-galaxy">
+              <div class="monitor-label">CAM 4: METAGALAXY ARCHIVE (HOSTING PROVIDERS)</div>
+              <div class="render-container" id="macroCanvasContainer"></div>
+              <div class="galaxy-legend">
+                <span>STAR SIZE: Episode Archive Length</span>
+                <span>STAR GLOW: Value4Value Heat (Boosts)</span>
+              </div>
+            </div>
+
+            <!-- MONITOR 5: CARGO HOLD (CCTV FEED) -->
+            <div class="viewport-panel" id="monitor-cargo">
+              <div class="cctv-panel">
+                <header class="cctv-header">
+                  <span class="cctv-rec blink">● REC</span>
+                  <span>HOLD CAM FEED #02 - ZERO-G STORAGE</span>
+                  <span class="cctv-time" id="cctvTime">--:--:--</span>
+                </header>
+                <div class="cctv-screen" id="cargoContainer">
+                  <!-- Matter.js Injected Here with CSS CRT night-vision filter -->
+                </div>
+                <footer class="cctv-footer">
+                  <span>ACTIVE DROPS: <strong id="liveVolume">0</strong></span>
+                  <span>CURRENT BOUNTY POT: <strong id="cctvJackpot">0</strong> SATS</span>
+                </footer>
+              </div>
+            </div>
+
+            <!-- MONITOR 6: LEDGER PAY (6-OPTION WALL) -->
+            <div class="viewport-panel" id="monitor-ledger">
+              <div class="ledger-screen">
+                <div class="ledger-header-panel">
+                  <h2>PILOT ACCOUNT LEDGER</h2>
+                  <p>Link multiple payment sources to provision platform tokens (1 SAT = 1 Credit).</p>
+                  <div class="master-balance">
+                    <span>ACTIVE LEDGER BALANCE</span>
+                    <h1 id="tokenBalance">0 <span class="neon-text">SATS</span></h1>
+                    <button id="loginBtn" class="btn-login">LINK WALLET IDENTITY (LNURL)</button>
+                  </div>
+                </div>
+                <div class="payment-wall-grid">
+                  <div class="payment-card option-alby">
+                    <h3>Lightning Extension</h3>
+                    <p class="dim-text">Real-time WebLN keysends.</p>
+                    <button class="pay-btn btn-alby" disabled>FUND VIA ALBY</button>
+                  </div>
+                  <div class="payment-card option-strike">
+                    <h3>Strike API</h3>
+                    <p class="dim-text">Fast fiat-to-lightning portal.</p>
+                    <button class="pay-btn btn-strike" disabled>FUND VIA STRIKE</button>
+                  </div>
+                  <div class="payment-card disabled">
+                    <h3>PayPal Ledger</h3>
+                    <p class="dim-text">Direct fiat bridge.</p>
+                    <button class="pay-btn disabled" disabled>COMING SOON</button>
+                  </div>
+                  <div class="payment-card disabled">
+                    <h3>Stripe Portal</h3>
+                    <p class="dim-text">Credit/Debit checkout.</p>
+                    <button class="pay-btn disabled" disabled>COMING SOON</button>
+                  </div>
+                  <div class="payment-card disabled">
+                    <h3>CashApp Pay</h3>
+                    <p class="dim-text">Direct mobile tag deposit.</p>
+                    <button class="pay-btn disabled" disabled>COMING SOON</button>
+                  </div>
+                  <div class="payment-card disabled">
+                    <h3>OpenNode API</h3>
+                    <p class="dim-text">Enterprise BTC processor.</p>
+                    <button class="pay-btn disabled" disabled>COMING SOON</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MONITOR 7: SYSTEM LOGS / SETTINGS -->
+            <div class="viewport-panel" id="monitor-settings">
+              <div class="settings-panel">
+                <h2>COCKPIT CONFIGURATION</h2>
+                <div class="settings-grid">
+                  <section class="settings-card">
+                    <h3>Podcasting 2.0 Star Lifecycles</h3>
+                    <ul class="star-tiers-chart">
+                      <li><strong>Nebula:</strong> Incubator feed (&lt; 3 eps).</li>
+                      <li><strong>Protostar:</strong> Fresh launch, slow freq.</li>
+                      <li><strong>Main Sequence:</strong> Active stable star.</li>
+                      <li><strong>Red Giant:</strong> Massive legacy archive.</li>
+                      <li><strong>Supernova:</strong> Viral, hyper-active.</li>
+                      <li><strong>Pulsar:</strong> Rigorous fast-pace.</li>
+                      <li><strong>Black Hole:</strong> Cultural Titan.</li>
+                    </ul>
+                  </section>
+                  <section class="settings-card">
+                    <h3>Interface Calibration</h3>
+                    <button class="pill-btn" id="clearCookiesBtn">Wipe Cookie Limits (Reset Scans)</button>
+                    <button class="pill-btn" id="triggerReportBtn">Construct Fix-It Compliance Report</button>
+                  </section>
+                </div>
+              </div>
+            </div>
+
+          </main>
+
+          <!-- LEAD-GEN MODAL POPUP -->
+          <div class="lead-modal hidden" id="emailModal">
+            <div class="modal-content">
+              <h2>📊 ACTIVATE COMPLIANCE REPORT</h2>
+              <p>Enter your Pilot Email to unlock the step-by-step Podcasting 2.0 "Fix-It" Blueprint containing custom copy-paste XML repairs for your feed!</p>
+              <input type="email" id="leadEmail" placeholder="captain@yourship.com">
+              <div class="modal-actions">
+                <button id="submitEmailBtn" class="pill-btn">GET REPORT</button>
+                <button id="closeModalBtn" class="pill-btn cancel">CANCEL</button>
+              </div>
             </div>
           </div>
-        </section>
 
-        <!-- THE ATLAS (GRAVITY WELL) -->
-        <section class="panel atlas-panel hidden" style="grid-column: 1 / -1; min-height: 400px; display: flex; flex-direction: column;">
-          <div class="panel-header">THE ATLAS (ORBITAL RADAR)</div>
-          <div class="atlas-controls" style="margin-bottom: 10px; display: flex; gap: 10px;">
-            <input type="text" id="atlasInput" placeholder="Enter Podcast Name to map Gravity Well..." class="nav-input" style="flex: 1;">
-            <button id="atlasScanBtn" class="btn-scan">WARP</button>
+        </div> <!-- End Cockpit Screen -->
+        
+        <!-- HARDWARE BOTTOM CONTROLS RAIL -->
+        <div class="cockpit-controls-rail">
+          <div class="rail-label">MONITOR FEED SWAP MATRIX</div>
+          <div class="button-row">
+            <button class="control-key active" data-target="monitor-scanner">
+              <div class="btn-led"></div>
+              <span>01 SCANNER</span>
+            </button>
+            <button class="control-key" data-target="monitor-astrogation">
+              <div class="btn-led"></div>
+              <span>02 NEIGHBOR</span>
+            </button>
+            <button class="control-key" data-target="monitor-quadcam">
+              <div class="btn-led"></div>
+              <span>03 EXTERNAL</span>
+            </button>
+            <button class="control-key" data-target="monitor-galaxy">
+              <div class="btn-led"></div>
+              <span>04 MACRO</span>
+            </button>
+            <button class="control-key" data-target="monitor-cargo">
+              <div class="btn-led"></div>
+              <span>05 CARGO</span>
+            </button>
+            <button class="control-key" data-target="monitor-ledger">
+              <div class="btn-led"></div>
+              <span>06 LEDGER</span>
+            </button>
+            <button class="control-key" data-target="monitor-settings">
+              <div class="btn-led"></div>
+              <span>07 SETTINGS</span>
+            </button>
           </div>
-          <div id="atlasContainer" style="flex: 1; background: #000; border: 1px solid var(--panel-border); border-radius: 4px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
-            <p class="dim-text" id="atlasStatus" style="position: absolute; z-index: 10;">AWAITING WARP COORDINATES...</p>
-            <canvas id="atlasCanvas" width="800" height="400" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
-          </div>
-        </section>
+        </div>
 
-        <!-- ZERO-G CARGO BAY -->
-        <section class="panel cargo-panel" style="grid-column: 1 / -1; min-height: 500px; display: flex; flex-direction: column;">
-          <div class="panel-header" style="display: flex; justify-content: space-between;">
-            <span>ZERO-G CARGO BAY (LIVE FIREHOSE)</span>
-            <span class="neon-text" id="bountyStatus">VOLUME: 0% | REWARD: 0 SATS</span>
-          </div>
-          <p class="dim-text" style="margin-top:0;">Listening to global Podping network... Waiting for publishers to drop episodes.</p>
-          <div id="cargoContainer" style="flex: 1; background: #000; border: 1px solid var(--panel-border); border-radius: 4px; position: relative; overflow: hidden;">
-            <!-- Matter.js Canvas injected here -->
-          </div>
-        </section>
+      </div> <!-- End Cockpit Bezel -->
+    </div> <!-- End Bridge Shell -->
 
-      </div>
-    </div>
+    <!-- SCRIPTS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <script type="module" src="./main.js"></script>
-    <script type="module" src="./atlas.js"></script>
+    <script type="module" src="./star_chart.js"></script>
     <script type="module" src="./cargo.js"></script>
   </body>
 </html>

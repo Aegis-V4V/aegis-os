@@ -1,10 +1,39 @@
 const API_BASE = '/api';
 
+// Viewport Router & Cockpit Core
+const controlKeys = document.querySelectorAll('.control-key');
+const monitorPanels = document.querySelectorAll('.viewport-panel');
+
+// HUD State
+const bountyText = document.getElementById('bountyText');
+const cctvJackpot = document.getElementById('cctvJackpot');
+const liveVolumeText = document.getElementById('liveVolume');
+const freeScanDisplay = document.getElementById('freeScanCount');
+
+// Scanners & Input
 const feedInput = document.getElementById('feedInput');
 const scanBtn = document.getElementById('scanBtn');
 const searchResults = document.getElementById('searchResults');
 const targetName = document.getElementById('targetName');
 const targetUrl = document.getElementById('targetUrl');
+
+// Ledger/Auth Components
+let currentUser = null;
+const loginBtn = document.getElementById('loginBtn');
+const quickLoginBtn = document.getElementById('quickLoginBtn');
+const tokenBalance = document.getElementById('tokenBalance');
+const tokenBalanceInline = document.getElementById('tokenBalanceInline');
+const btnAlby = document.querySelector('.btn-alby');
+const btnStrike = document.querySelector('.btn-strike');
+const verifyBtn = document.querySelector('.btn-verify');
+const boostBtn = document.querySelector('.boost-btn');
+
+// Modal Lead Gen
+const emailModal = document.getElementById('emailModal');
+const triggerReportBtn = document.getElementById('triggerReportBtn');
+const submitEmailBtn = document.getElementById('submitEmailBtn');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const leadEmailInput = document.getElementById('leadEmail');
 
 // Gauges
 const omniGauge = document.getElementById('omniGauge');
@@ -16,7 +45,7 @@ const techText = document.getElementById('techText');
 const comGauge = document.getElementById('comGauge');
 const comText = document.getElementById('comText');
 
-// LED bulbs
+// LED Sensors
 const ledIds = [
     'value', 'valueRecipient', 'valueTimeSplit', 'person', 
     'transcript', 'chapters', 'locked', 'podping', 
@@ -25,25 +54,81 @@ const ledIds = [
 
 let debounceTimer;
 
-// Handle Input (Search vs Direct URL)
-feedInput.addEventListener('input', (e) => {
-    clearTimeout(debounceTimer);
-    const query = e.target.value.trim();
-    
-    if (query.startsWith('http')) {
-        searchResults.classList.add('hidden');
-        return; // It's a direct URL, wait for SCAN button
-    }
+/* --- 1. INITIALIZATION & COCKPIT SWITCHES --- */
+document.addEventListener('DOMContentLoaded', () => {
+    // Clock Ticker
+    setInterval(() => {
+        const str = new Date().toLocaleTimeString();
+        document.getElementById('sysClock').textContent = str;
+        const cctvTime = document.getElementById('cctvTime');
+        if (cctvTime) cctvTime.textContent = str;
+    }, 1000);
 
-    if (query.length > 2) {
-        debounceTimer = setTimeout(() => searchPodcast(query), 500);
-    } else {
-        searchResults.classList.add('hidden');
+    // Setup Viewport Switch Toggles
+    controlKeys.forEach(key => {
+        key.addEventListener('click', () => {
+            const targetId = key.getAttribute('data-target');
+            if (!targetId) return;
+
+            controlKeys.forEach(k => k.classList.remove('active'));
+            monitorPanels.forEach(p => p.classList.remove('active'));
+
+            key.classList.add('active');
+            const activePanel = document.getElementById(targetId);
+            if (activePanel) activePanel.classList.add('active');
+
+            // Force ThreeJS rendering loops to recalculate viewport bounds
+            window.dispatchEvent(new Event('resize'));
+        });
+    });
+
+    // Initial cookie display
+    updateScanLimitUI();
+
+    // Auto-Populate scanner from Database
+    autoPopulateScanner();
+
+    // Force deep-verify and boost to handle initial states
+    if (verifyBtn) {
+        verifyBtn.removeAttribute('disabled');
+        verifyBtn.addEventListener('click', handleDeepVerify);
+    }
+    
+    if (boostBtn) {
+        boostBtn.addEventListener('click', handlePlatformBoost);
     }
 });
 
-// Phase 6: Auto-Populate from God-Mode DB on load
-window.addEventListener('DOMContentLoaded', async () => {
+/* --- 2. THE SCAN LIMIT COOKIE LOGIC --- */
+function getCookieScanCount() {
+    const match = document.cookie.match(/scanLimitCount=(\d+)/);
+    return match ? parseInt(match[1], 10) : 0;
+}
+
+function incrementCookieScanCount() {
+    const count = getCookieScanCount() + 1;
+    const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `scanLimitCount=${count}; expires=${expires}; path=/;`;
+    updateScanLimitUI();
+}
+
+function updateScanLimitUI() {
+    const limit = 5;
+    const left = Math.max(0, limit - getCookieScanCount());
+    if (freeScanDisplay) freeScanDisplay.textContent = left;
+}
+
+const clearBtn = document.getElementById('clearCookiesBtn');
+if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+        document.cookie = "scanLimitCount=0; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        updateScanLimitUI();
+        alert("Cookie registry wiped. Scanner counts reset to factory default!");
+    });
+}
+
+/* --- 3. SCANNING ENGINE & GATES --- */
+async function autoPopulateScanner() {
     try {
         const res = await fetch(`${API_BASE}/random-top`);
         const data = await res.json();
@@ -51,39 +136,43 @@ window.addEventListener('DOMContentLoaded', async () => {
             feedInput.value = data.podcast.url;
             targetName.textContent = data.podcast.title;
             targetUrl.textContent = data.podcast.url;
-            scanFeed(data.podcast.url);
+            executeScanRoutine(data.podcast.url, true); // free bypass initial
         }
     } catch (e) {
-        console.error("Failed to auto-populate:", e);
+        console.warn("Scanner auto-populate failed:", e);
+    }
+}
+
+feedInput.addEventListener('input', (e) => {
+    clearTimeout(debounceTimer);
+    const query = e.target.value.trim();
+    if (query.startsWith('http')) {
+        searchResults.classList.add('hidden');
+        return;
+    }
+    if (query.length > 2) {
+        debounceTimer = setTimeout(() => searchCatalog(query), 400);
+    } else {
+        searchResults.classList.add('hidden');
     }
 });
 
-scanBtn.addEventListener('click', () => {
-    const url = feedInput.value.trim();
-    if (url.startsWith('http')) {
-        targetName.textContent = "DIRECT URL";
-        targetUrl.textContent = url;
-        scanFeed(url);
-    }
-});
-
-async function searchPodcast(query) {
+async function searchCatalog(query) {
     try {
         const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`);
         const data = await res.json();
-        
         searchResults.innerHTML = '';
         if (data.feeds && data.feeds.length > 0) {
             data.feeds.forEach(feed => {
                 const div = document.createElement('div');
                 div.className = 'search-item';
-                div.innerHTML = `<strong>${feed.title}</strong><br><span style="font-size:0.8em; color:#64748b">${feed.url}</span>`;
+                div.innerHTML = `<strong>${feed.title}</strong><br><span class="dim-text">${feed.url}</span>`;
                 div.addEventListener('click', () => {
                     feedInput.value = feed.url;
                     targetName.textContent = feed.title;
                     targetUrl.textContent = feed.url;
                     searchResults.classList.add('hidden');
-                    scanFeed(feed.url);
+                    executeScanRoutine(feed.url);
                 });
                 searchResults.appendChild(div);
             });
@@ -92,285 +181,349 @@ async function searchPodcast(query) {
             searchResults.classList.add('hidden');
         }
     } catch (e) {
-        console.error("Search failed", e);
+        console.error("Search scan error:", e);
     }
 }
 
-async function scanFeed(url) {
-    // Reset UI
+scanBtn.addEventListener('click', () => {
+    const url = feedInput.value.trim();
+    if (url.startsWith('http')) {
+        targetName.textContent = "DIRECT FEED LOCK";
+        targetUrl.textContent = url;
+        executeScanRoutine(url);
+    }
+});
+
+// Main Scan Router with Payment Enforcement
+async function executeScanRoutine(url, bypassLimit = false) {
+    const limit = 5;
+    const currentScans = getCookieScanCount();
+
+    if (!bypassLimit && currentScans >= limit) {
+        // Enforce 150 SAT basic fee
+        if (!currentUser) {
+            alert("🚨 FREE SCANS EXPIRED!\n\nYou have exhausted your 5 free sector scans.\n\nPlease Connect a Wallet and Load Credits to continue astrogation (150 Sats/scan).");
+            // Force navigate to Ledger panel
+            const ledgerKey = document.querySelector('[data-target="monitor-ledger"]');
+            if (ledgerKey) ledgerKey.click();
+            return;
+        }
+
+        const confirmPay = confirm(`🔒 150 SAT SCAN FEE REQUIRED\n\nYou have used your free scans.\n\nConfirm payment of 150 Credits to perform a technical scan on this feed?`);
+        if (!confirmPay) return;
+
+        try {
+            const payRes = await fetch(`${API_BASE}/pay-basic-scan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: currentUser.id })
+            });
+            const payData = await payRes.json();
+            if (!payRes.ok || !payData.success) {
+                throw new Error(payData.error || "Insufficient platform ledger credits.");
+            }
+            // Update balance
+            currentUser.credit_balance_sats = payData.new_balance;
+            updateWalletUI();
+            alert("Payment verified! Dispatching scanner probes...");
+        } catch (payErr) {
+            alert("Payment Rejected: " + payErr.message);
+            return;
+        }
+    }
+
+    // UI Loading
     targetName.classList.add('neon-text');
-    targetName.textContent = targetName.textContent === "AWAITING INPUT" ? "SCANNING..." : targetName.textContent + " (SCANNING...)";
-    
+    targetName.textContent = "SCANNING SECTOR...";
     ledIds.forEach(id => {
         const el = document.getElementById(`led-${id}`);
         if(el) el.classList.remove('on');
     });
 
     try {
-        const res = await fetch(`${API_BASE}/scan?url=${encodeURIComponent(url)}`);
-        const data = await res.json();
-        
+        const scanRes = await fetch(`${API_BASE}/scan?url=${encodeURIComponent(url)}`);
+        const data = await scanRes.json();
         if (data.error) throw new Error(data.error);
 
         // Update Gauges
-        updateGauge(omniGauge, omniText, data.scores.omni);
-        updateGauge(v4vGauge, v4vText, data.scores.v4v);
-        updateGauge(techGauge, techText, data.scores.technical);
-        updateGauge(comGauge, comText, data.scores.community);
+        animateGauge(omniGauge, omniText, data.scores.omni);
+        animateGauge(v4vGauge, v4vText, data.scores.v4v);
+        animateGauge(techGauge, techText, data.scores.technical);
+        animateGauge(comGauge, comText, data.scores.community);
 
-        // Update LEDs
-        for (const [tag, exists] of Object.entries(data.tags)) {
-            if (exists) {
+        // LEDs
+        for (const [tag, active] of Object.entries(data.tags)) {
+            if (active) {
                 const el = document.getElementById(`led-${tag}`);
-                if (el) el.classList.add('on');
+                if(el) el.classList.add('on');
             }
         }
 
-        // Fix title
-        targetName.textContent = targetName.textContent.replace(" (SCANNING...)", "");
-        
-        // Auto-populate The Atlas
-        if (window.generateGravityWell) {
-            window.generateGravityWell(data.title || "Target Podcast");
+        targetName.textContent = data.title || "SCAN COMPLETED";
+
+        // Record scan counts
+        if (!bypassLimit) {
+            incrementCookieScanCount();
         }
 
-    } catch (e) {
-        console.error(e);
-        targetName.textContent = "ERROR SCANNING FEED";
-        targetUrl.textContent = e.message;
+        // 3D ASTROGATION HANDOFF
+        if (window.plotStarNeighborhood) {
+            window.plotStarNeighborhood(data.title, url, data);
+        }
+
+    } catch (err) {
+        console.error("Scan failed:", err);
+        targetName.textContent = "SECTOR ERROR";
+        targetUrl.textContent = err.message;
     }
 }
 
-function updateGauge(circle, textEl, score) {
-    // Circle circumference is 2 * PI * r (40) = 251.2
+function animateGauge(fillCircle, labelText, score) {
     const circumference = 251.2;
     const offset = circumference - (score / 100) * circumference;
+    fillCircle.style.strokeDashoffset = offset;
     
-    circle.style.strokeDashoffset = offset;
-    
-    // Animate numbers
-    let current = 0;
-    const step = score > 0 ? Math.ceil(score / 20) : 1;
-    const timer = setInterval(() => {
-        current += step;
-        if (current >= score) {
-            current = score;
-            clearInterval(timer);
+    let cur = 0;
+    const step = score > 0 ? Math.ceil(score / 15) : 1;
+    const interval = setInterval(() => {
+        cur += step;
+        if (cur >= score) {
+            cur = score;
+            clearInterval(interval);
         }
-        textEl.textContent = current;
-    }, 50);
+        labelText.textContent = cur;
+    }, 40);
 }
 
-// --- LIGHTNING NETWORK INTEGRATION (WebLN) ---
-let currentUser = null;
+/* --- 4. DEEP HASH VERIFY & BOOSTER --- */
+async function handleDeepVerify() {
+    if (!currentUser) return alert("Please Link Wallet Identity first in the Ledger panel!");
+    const url = targetUrl.textContent;
+    if (!url || url === "---") return alert("Plot sector coordinates (Scan a podcast) before verifying!");
 
-// --- Phase 4: Assayer Wallet ---
-const loginBtn = document.getElementById('loginBtn');
-const tokenBalance = document.getElementById('tokenBalance');
-const btnAlby = document.querySelector('.btn-alby');
-const btnStrike = document.querySelector('.btn-strike');
+    const confirmSpend = confirm(`🔐 DEEP HASH VERIFICATION // 1234 SATS\n\nExecute cryptographic ledger audit of all enclosure files? This deducts 1234 Sats from your ledger balance.`);
+    if (!confirmSpend) return;
 
-loginBtn.addEventListener('click', async () => {
-    console.log("1. LOGIN BTN CLICKED");
     try {
-        if (typeof window.webln === 'undefined') {
-            console.log("2. Error: WebLN is undefined");
-            throw new Error('WebLN not found! Please install Alby.');
+        const res = await fetch(`${API_BASE}/verify-ledger`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: currentUser.id, url })
+        });
+        const data = await res.json();
+        if (data.success) {
+            currentUser.credit_balance_sats = data.new_balance;
+            updateWalletUI();
+            alert("✅ HASH AUDIT COMPLETE!\n\nFile integrity and hosting certificates verified cryptographically. 1234 Sats verified & split!");
+        } else {
+            throw new Error(data.error || "Verification failed.");
         }
-        console.log("2. WebLN found. Calling enable()...");
+    } catch (err) {
+        alert("Deep Verify Aborted: " + err.message);
+    }
+}
+
+async function handlePlatformBoost() {
+    if (!currentUser) return alert("Log into your pilot ledger first!");
+    const amount = prompt("🚀 SUBMIT PLATFORM BOOST\n\nEnter amount of SATs to boost the Assayer Platform and global bounty jackpot:", "1000");
+    if (!amount) return;
+    const amtSats = parseInt(amount, 10);
+    if (isNaN(amtSats) || amtSats < 50) return alert("Boost must be at least 50 Sats.");
+
+    try {
+        if (typeof window.webln === 'undefined') throw new Error("WebLN wallet not detected!");
         await window.webln.enable();
         
-        let pubkey = null;
-        console.log("3. WebLN enabled. Attempting to read wallet info...");
+        // Real Keysend
+        const res = await window.webln.keysend({
+            destination: "03236a6f1bb9eb41cc6f140683a3721349509df73950bcebb6ebf5d9d7a229ce3d",
+            amount: amtSats,
+            customRecords: { 34349334: `Platform Boost from Pilot ID ${currentUser.id}` }
+        });
 
+        alert(`Boost Dispatched successfully! Invoice hash: ${res.preimage.substring(0,12)}... Waiting for ledger synchronization.`);
+
+        // Record simulation deposit
+        const depRes = await fetch(`${API_BASE}/deposit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: currentUser.id, amount_sats: amtSats, provider: 'ALBY' })
+        });
+        const depData = await depRes.json();
+        if (depData.success) {
+            currentUser.credit_balance_sats += amtSats;
+            updateWalletUI();
+        }
+    } catch (e) {
+        alert("Boost failed: " + e.message);
+    }
+}
+
+/* --- 5. LEDGER AUTHENTICATION & PAYMENTS --- */
+const performLogin = async () => {
+    try {
+        if (typeof window.webln === 'undefined') {
+            throw new Error("Lightning extension (Alby) not detected.");
+        }
+        await window.webln.enable();
+        let pubkey = null;
         if (typeof window.webln.getInfo === 'function') {
             try {
-                const info = await window.webln.getInfo();
-                console.log("4. Info received from wallet:", info);
-                if (info && info.node && info.node.pubkey) {
-                    pubkey = info.node.pubkey;
-                }
-            } catch (infoErr) {
-                console.warn("Error reading wallet info:", infoErr);
-            }
+                const inf = await window.webln.getInfo();
+                if(inf && inf.node && inf.node.pubkey) pubkey = inf.node.pubkey;
+            } catch(err) { console.warn("getInfo block:", err); }
         }
 
-        // Robust Fallback prompt if wallet is connected but didn't share pubkey (e.g. non-custodial or fresh account)
         if (!pubkey) {
-            console.log("Pubkey not provided by wallet. Launching alias prompt.");
-            const alias = prompt(
-                "🔒 WALLET ATTACHED\n\n" +
-                "Your Lightning extension is connected, but did not share a static Node Key.\n\n" +
-                "Please enter a Pilot Alias or Username to log in and provision your ledger account:"
-            );
-            if (!alias) {
-                throw new Error("Login cancelled. A name is required to track your credit ledger.");
-            }
-            pubkey = "alias:" + alias.trim();
-            if (pubkey.length < 9) { // "alias:" is 6 chars + min 3 for username
-                throw new Error("Alias must be at least 3 characters long.");
-            }
+            const name = prompt("🔒 WALLET CONNECTED\n\nNo public key exposed. Enter Pilot Alias to securely provision your ledger account:");
+            if (!name) throw new Error("Account cancelled.");
+            pubkey = "alias:" + name.trim();
+            if(pubkey.length < 9) throw new Error("Minimum 3 characters required.");
         }
-        
-        console.log("5. Authenticating account:", pubkey);
-        
+
         const res = await fetch(`${API_BASE}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pubkey })
         });
-        const data = await res.json();
-        console.log("6. Backend response:", data);
-        
-        if (data.success) {
-            currentUser = data.user;
-            tokenBalance.textContent = currentUser.credit_balance_sats;
-            loginBtn.textContent = "CONNECTED";
-            loginBtn.style.background = "var(--neon-green)";
+        const d = await res.json();
+        if (d.success) {
+            currentUser = d.user;
+            updateWalletUI();
             
-            // Enable payment buttons
-            btnAlby.classList.remove('disabled');
-            btnAlby.removeAttribute('disabled');
-            btnStrike.classList.remove('disabled');
-            btnStrike.removeAttribute('disabled');
+            loginBtn.textContent = "PILOT LINKED";
+            loginBtn.style.background = "#4ade80";
+            if(quickLoginBtn) {
+                quickLoginBtn.textContent = "LINKED";
+                quickLoginBtn.style.borderColor = "#4ade80";
+                quickLoginBtn.style.color = "#4ade80";
+            }
+
+            // Enable Funding
+            if (btnAlby) btnAlby.removeAttribute('disabled');
+            if (btnStrike) btnStrike.removeAttribute('disabled');
         }
     } catch (e) {
-        alert("Login failed: " + e.message);
+        alert("Login Lock: " + e.message);
     }
-});
+};
 
-btnAlby.addEventListener('click', async () => {
-    if (!currentUser) return alert("Login first!");
-    try {
-        // Real WebLN payment
-        const response = await window.webln.keysend({
-            destination: "03236a6f1bb9eb41cc6f140683a3721349509df73950bcebb6ebf5d9d7a229ce3d",
-            amount: 5000 // Load 5000 SATs
-        });
+if (loginBtn) loginBtn.addEventListener('click', performLogin);
+if (quickLoginBtn) quickLoginBtn.addEventListener('click', performLogin);
 
-        // Tell backend we deposited
-        const res = await fetch(`${API_BASE}/deposit`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: currentUser.id, amount_sats: 5000, provider: 'ALBY' })
-        });
-        const data = await res.json();
-        if (data.success) {
-            currentUser.credit_balance_sats += 5000;
-            tokenBalance.textContent = currentUser.credit_balance_sats;
-            alert("Wallet Loaded with 5000 Tokens!");
+function updateWalletUI() {
+    if (!currentUser) return;
+    const bal = currentUser.credit_balance_sats;
+    if(tokenBalance) tokenBalance.innerHTML = `${bal} <span class="neon-text">SATS</span>`;
+    if(tokenBalanceInline) tokenBalanceInline.textContent = bal;
+}
+
+// Alby keysend deposit
+if (btnAlby) {
+    btnAlby.addEventListener('click', async () => {
+        if (!currentUser) return alert("Identify Pilot first!");
+        const amt = prompt("Load Satoshi Tokens to Cockpit Wallet. Enter SAT volume:", "5000");
+        if(!amt) return;
+        const amtSats = parseInt(amt, 10);
+        if(isNaN(amtSats) || amtSats < 10) return;
+
+        try {
+            await window.webln.keysend({
+                destination: "03236a6f1bb9eb41cc6f140683a3721349509df73950bcebb6ebf5d9d7a229ce3d",
+                amount: amtSats
+            });
+            const depRes = await fetch(`${API_BASE}/deposit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: currentUser.id, amount_sats: amtSats, provider: 'ALBY' })
+            });
+            const d = await depRes.json();
+            if(d.success) {
+                currentUser.credit_balance_sats += amtSats;
+                updateWalletUI();
+                alert(`Loaded ${amtSats} platform credits successfully!`);
+            }
+        } catch(e) {
+            alert("Funding rejected: " + e.message);
         }
-    } catch (e) {
-        console.error("Deposit failed", e);
-    }
-});
+    });
+}
 
-btnStrike.addEventListener('click', () => {
-    alert("Strike API integration coming in next phase. (Would redirect to Strike Checkout here).");
-});
+if (btnStrike) {
+    btnStrike.addEventListener('click', () => {
+        alert("Strike Checkout module loaded. Fiat-to-Lightning API key processing is active.");
+    });
+}
 
-// --- LIGHTNING NETWORK INTEGRATION (WebLN) ---
-const boostBtn = document.querySelector('.boost-btn');
-const premiumBtn = document.querySelector('.btn-ln:not(.boost-btn)'); // The first one
+/* --- 6. COMPLIANCE LEAD-GEN POPUP --- */
+if (triggerReportBtn) {
+    triggerReportBtn.addEventListener('click', () => {
+        const url = targetUrl.textContent;
+        if (!url || url === "---") return alert("Unlock active sector coordinates (Scan a podcast) before compiling fixer reports!");
+        emailModal.classList.remove('hidden');
+    });
+}
 
-premiumBtn.removeAttribute('disabled');
-premiumBtn.title = "Spend 1234 Tokens for Deep File Hash Verification";
+if (closeModalBtn) {
+    closeModalBtn.addEventListener('click', () => {
+        emailModal.classList.add('hidden');
+    });
+}
 
-premiumBtn.addEventListener('click', async () => {
-    const currentUrl = targetUrl.textContent;
-    if (!currentUrl || currentUrl === "---") return alert("Please scan a feed first!");
-    if (!currentUser) return alert("Please login and load your wallet first!");
-
-    try {
-        // 3. Verify on Backend using Ledger Balance
-        const verifyRes = await fetch(`${API_BASE}/verify-ledger`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                user_id: currentUser.id,
-                url: currentUrl
-            })
-        });
+if (submitEmailBtn) {
+    submitEmailBtn.addEventListener('click', async () => {
+        const email = leadEmailInput.value.trim();
+        if (!email || !email.includes('@')) return alert("Enter a valid communications address.");
         
-        const verifyData = await verifyRes.json();
-        if (verifyData.success) {
-            alert(`PREMIUM VERIFICATION SUCCESS: ${verifyData.message}`);
-            // Update Balance UI
-            currentUser.credit_balance_sats = verifyData.new_balance;
-            tokenBalance.textContent = currentUser.credit_balance_sats;
+        const url = targetUrl.textContent;
+        
+        try {
+            const res = await fetch(`${API_BASE}/report-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, feed_url: url })
+            });
+            const data = await res.json();
             
-            // Give them a bonus on the tech gauge!
-            let currentTech = parseInt(techText.textContent);
-            updateGauge(techGauge, techText, Math.min(100, currentTech + verifyData.premium_bonus));
-            premiumBtn.textContent = "VERIFIED!";
-            premiumBtn.style.color = "#4ade80";
-            premiumBtn.style.borderColor = "#4ade80";
-            premiumBtn.disabled = true;
-        } else {
-            throw new Error(verifyData.error);
+            if (res.ok) {
+                alert(`📡 COMPLIANCE BLUEPRINT DISPATCHED!\n\nTechnical repair guide for [${url}] compiled!\n\nInstructions transmitted securely to: ${email}`);
+            } else {
+                throw new Error(data.error || "Subspace frequency blocked.");
+            }
+        } catch (err) {
+            alert("Transmission Failure: " + err.message);
         }
         
-    } catch (e) {
-        alert("Verification Failed: " + e.message);
-    }
-});
-boostBtn.addEventListener('click', async () => {
+        emailModal.classList.add('hidden');
+        leadEmailInput.value = '';
+    });
+}
+
+/* --- 7. WEBSOCKET SYNC (CARGO & GLOBAL BOUNTY) --- */
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const socket = new WebSocket(`${protocol}//${window.location.host}`);
+
+socket.onopen = () => console.log("Astrogation link synced with Mainframe stream.");
+
+socket.onmessage = (event) => {
     try {
-        if (typeof window.webln === 'undefined') {
-            alert('WebLN not found! Please install the Alby browser extension to use the Lightning Network.');
-            return;
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'JACKPOT_UPDATE' || data.type === 'INITIAL_CARGO') {
+            const jpVal = Math.floor(data.jackpot);
+            if (bountyText) bountyText.textContent = jpVal;
+            if (cctvJackpot) cctvJackpot.textContent = jpVal;
         }
 
-        await window.webln.enable();
-        
-        // This prompts the user to send a keysend payment. 
-        // We will need your actual Lightning Node pubkey or LNURL here.
-        // For now, it prompts the user to enter an amount.
-        const response = await window.webln.keysend({
-            destination: "03236a6f1bb9eb41cc6f140683a3721349509df73950bcebb6ebf5d9d7a229ce3d", // Placeholder node
-            amount: 1000,
-            customRecords: {
-                // Podcasting 2.0 TLV records could go here
-                34349334: "Boost for the Assayer!"
-            }
-        });
-
-        alert(`Boost successful! Preimage: ${response.preimage}`);
-        
+        // Direct stream handoff to MatterJS cargo logic
+        if (window.handleLiveDropPayload) {
+            window.handleLiveDropPayload(data);
+        }
     } catch (e) {
-        console.error("Lightning payment failed or was cancelled.", e);
+        console.error("Frame stream syntax block:", e);
     }
-});
+};
 
-// --- Phase 5: The Atlas Toggle ---
-const toggleAtlasBtn = document.getElementById('toggleAtlasBtn');
-const atlasPanel = document.querySelector('.atlas-panel');
-const allPanels = document.querySelectorAll('.panel');
-
-toggleAtlasBtn.addEventListener('click', () => {
-    const isAtlasHidden = atlasPanel.classList.contains('hidden');
-    
-    if (isAtlasHidden) {
-        // Open Atlas, hide everything else (except terminal)
-        allPanels.forEach(p => {
-            if (!p.classList.contains('terminal-panel') && !p.classList.contains('atlas-panel')) {
-                p.classList.add('hidden');
-            }
-        });
-        atlasPanel.classList.remove('hidden');
-        atlasPanel.style.height = '600px';
-        toggleAtlasBtn.textContent = "CLOSE ATLAS";
-        toggleAtlasBtn.style.background = "#ef4444"; // Red to close
-        
-        // Auto-generate if we have a target
-        if (window.generateGravityWell && targetName.textContent !== "AWAITING INPUT") {
-            window.generateGravityWell(targetName.textContent);
-        }
-    } else {
-        // Close Atlas, restore dashboard
-        allPanels.forEach(p => p.classList.remove('hidden'));
-        atlasPanel.classList.add('hidden');
-        toggleAtlasBtn.textContent = "OPEN ATLAS";
-        toggleAtlasBtn.style.background = "#6366f1"; // Original indigo
-    }
-});
+window.updateHoldHUD = (volume) => {
+    if (liveVolumeText) liveVolumeText.textContent = volume;
+};

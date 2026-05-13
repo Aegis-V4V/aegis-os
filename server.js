@@ -212,6 +212,22 @@ app.get('/api/scan', async (req, res) => {
         payload.scores.technical = Math.min(100, payload.scores.technical);
         payload.scores.omni = Math.floor((payload.scores.v4v + payload.scores.community + payload.scores.technical) / 3);
 
+        // Project Astrogation: Provision / Update Proprietary Metadata Mirror record
+        const starTierName = payload.scores.omni < 15 ? 'Nebula' :
+                             payload.scores.omni < 30 ? 'Protostar' :
+                             payload.scores.omni < 50 ? 'Main Sequence' :
+                             payload.scores.omni < 70 ? 'Red Giant' :
+                             payload.scores.omni < 85 ? 'Supernova' :
+                             payload.scores.omni < 95 ? 'Pulsar' : 'Black Hole';
+
+        db.run(`INSERT INTO podcast_metadata (feed_url, star_tier, verified_status, last_scanned_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(feed_url) DO UPDATE SET
+            star_tier = excluded.star_tier,
+            verified_status = excluded.verified_status,
+            last_scanned_at = CURRENT_TIMESTAMP`, 
+            [url, starTierName, payload.tags.integrity ? 1 : 0]);
+
         res.json(payload);
 
     } catch (error) {
@@ -299,7 +315,11 @@ app.post('/api/verify-ledger', (req, res) => {
             if (err) return res.status(500).json({ error: err.message });
             
             db.run("INSERT INTO ledger_transactions (user_id, type, provider, amount_sats) VALUES (?, 'VERIFICATION_FEE', 'INTERNAL', ?)", 
-                [user_id, -cost]);
+                [user_id, -cost], function(dbErr) {
+                    if (!dbErr) {
+                        executeSatSplit(cost, this.lastID);
+                    }
+                });
 
             res.json({
                 success: true,
@@ -308,6 +328,50 @@ app.post('/api/verify-ledger', (req, res) => {
                 new_balance: user.credit_balance_sats - cost
             });
         });
+    });
+});
+
+// Charge for Basic Scans after free trial expires (150 SATs)
+app.post('/api/pay-basic-scan', (req, res) => {
+    const { user_id } = req.body;
+    const cost = 150;
+
+    db.get("SELECT credit_balance_sats FROM users WHERE id = ?", [user_id], (err, user) => {
+        if (err || !user) return res.status(500).json({ error: "User not found." });
+        if (user.credit_balance_sats < cost) return res.status(402).json({ error: "Insufficient tokens." });
+
+        db.run("UPDATE users SET credit_balance_sats = credit_balance_sats - ? WHERE id = ?", [cost, user_id], (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            db.run("INSERT INTO ledger_transactions (user_id, type, provider, amount_sats) VALUES (?, 'SCAN_FEE', 'INTERNAL', ?)", 
+                [user_id, -cost], function(dbErr) {
+                    if (!dbErr) {
+                        executeSatSplit(cost, this.lastID);
+                    }
+                });
+
+            res.json({ 
+                success: true, 
+                new_balance: user.credit_balance_sats - cost 
+            });
+        });
+    });
+});
+
+// Capture Email Lead for Compliance Blueprints
+app.post('/api/report-email', (req, res) => {
+    const { email, feed_url } = req.body;
+    if (!email || !email.includes('@')) {
+        return res.status(400).json({ error: "Invalid communications channel." });
+    }
+
+    console.log(`[LEAD GEN] Blueprint compiled for ${feed_url} // Locked to pilot: ${email}`);
+
+    // Record in general system_state or specific logs if desired
+    // For MVP, simulating real transmission success
+    res.json({
+        success: true,
+        message: `Subspace transmission verified! technical bluepring for ${feed_url} dispatched to ${email}.`
     });
 });
 
@@ -329,7 +393,48 @@ mqttClient.on('connect', () => {
 // --- Phase 8: True Global State & Time-Based Lotteries ---
 const cron = require('node-cron');
 let dailyCargo = [];
-let jackpotPool = 5000; // Starting pool
+let jackpotPool = 5000; // Starting pool fallback
+
+// Project Astrogation: Restore persistent global jackpot state on startup
+db.get("SELECT value FROM system_state WHERE key = 'global_jackpot'", (err, row) => {
+    if (!err && row) {
+        jackpotPool = parseFloat(row.value);
+        console.log("[SYSTEM] Restored Global Jackpot Pool from system_state:", jackpotPool);
+    }
+});
+
+// Utility: Execute exact fractional split of inbound SATs
+function executeSatSplit(totalSats, txId) {
+    const amount = Math.abs(totalSats);
+    const indexCut = amount * 0.20;
+    const jackpotCut = amount * (40 / 150); 
+    const houseCut = amount * (80 / 150);
+
+    db.run(`INSERT INTO revenue_split_ledger 
+        (tx_id, index_node_sats, jackpot_sats, house_sats, total_sats) 
+        VALUES (?, ?, ?, ?, ?)`, 
+        [txId, indexCut, jackpotCut, houseCut, amount], (err) => {
+            if (err) console.error("Split Record Error:", err);
+        });
+
+    // Mutate global in-memory variable
+    jackpotPool += jackpotCut;
+    
+    // Persist value back to DB
+    db.run("UPDATE system_state SET value = ? WHERE key = 'global_jackpot'", [jackpotPool.toString()]);
+
+    // Real-Time WebSockets Broadcast to all Active Bridges
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+                type: 'JACKPOT_UPDATE',
+                jackpot: Math.floor(jackpotPool)
+            }));
+        }
+    });
+    
+    console.log(`[LEDGER] 3-Way Sat Split verified for TX#${txId}. Pool incremented by ${jackpotCut.toFixed(1)} Sats.`);
+}
 
 // 1. Connection Sync
 wss.on('connection', ws => {

@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
+  "engines": {
+    "node": ">=18 <21"
+  },
   "scripts": {
     "start": "node server.js",
     "setup": "node download_db.js",
+    "postinstall": "npm rebuild sqlite3 --build-from-source",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

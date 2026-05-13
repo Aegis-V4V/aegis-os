@@ -3,6 +3,7 @@ const cors = require('cors');
 const { fetchFromIndex } = require('./api');
 const { XMLParser } = require('fast-xml-parser');
 const basicAuth = require('express-basic-auth');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -20,15 +21,20 @@ app.use(basicAuth({
     realm: 'Antigravity Spaceship'
 }));
 
-// Serve compiled frontend statically
-app.use(express.static('frontend/dist'));
+// Serve compiled frontend statically using robust absolute path mapping
+const distPath = path.join(__dirname, 'frontend', 'dist');
+app.use(express.static(distPath));
+
+// Explicit root handler fallback
+app.get('/', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+});
 
 const db = require('./db');
 const sqlite3 = require('sqlite3').verbose();
 
 // Phase 6/9: Self-Healing God-Mode Local Database (Read-Only & Background Setup)
 const fs = require('fs');
-const path = require('path');
 const { spawn } = require('child_process');
 let localDb = null;
 let isDbReady = false;

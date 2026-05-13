@@ -318,8 +318,8 @@ const WebSocket = require('ws');
 const wss = new WebSocket.Server({ server });
 const mqtt = require('mqtt');
 
-// Connect to the official Podping MQTT WebSocket broker
-const mqttClient = mqtt.connect('wss://mqtt.podping.cloud');
+// Connect to the official Podping MQTT broker
+const mqttClient = mqtt.connect('mqtt://mqtt.podping.cloud:1883');
 
 mqttClient.on('connect', () => {
     console.log("Connected to Podping Firehose (mqtt.podping.cloud)");

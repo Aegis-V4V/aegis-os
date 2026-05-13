@@ -4,3 +4,4 @@ podcastindex_feeds.db
 frontend/node_modules/
 *.log
 *.tgz
+data/

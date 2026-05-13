@@ -3,8 +3,13 @@ const https = require('https');
 const { execSync } = require('child_process');
 const path = require('path');
 
-const DB_FILE = 'podcastindex_feeds.db';
-const TGZ_FILE = 'podcastindex_feeds.db.tgz';
+const dataDir = path.resolve(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+}
+
+const DB_FILE = path.join(dataDir, 'podcastindex_feeds.db');
+const TGZ_FILE = path.join(dataDir, 'podcastindex_feeds.db.tgz');
 const DOWNLOAD_URL = 'https://public.podcastindex.org/podcastindex_feeds.db.tgz';
 
 async function run() {
@@ -59,14 +64,9 @@ async function run() {
 
     console.log('[SETUP] Extracting database using system tar...');
     try {
-        // Check platform to run appropriate extraction
-        if (process.platform === 'win32') {
-            // On Windows PowerShell, we can use tar.exe which is bundled with Windows 10+
-            execSync(`tar -xzvf ${TGZ_FILE}`);
-        } else {
-            // Linux / Mac (Railway environment)
-            execSync(`tar -xzvf ${TGZ_FILE}`);
-        }
+        // Execute extraction inside the data/ directory
+        console.log(`[SETUP] Extracting inside ${dataDir}...`);
+        execSync(`tar -xzvf podcastindex_feeds.db.tgz`, { cwd: dataDir });
         console.log('[SETUP] Extraction complete! Cleaning up archive...');
         
         if (fs.existsSync(TGZ_FILE)) {

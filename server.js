@@ -28,14 +28,17 @@ const sqlite3 = require('sqlite3').verbose();
 
 // Phase 6/9: Self-Healing God-Mode Local Database (Read-Only & Background Setup)
 const fs = require('fs');
+const path = require('path');
 const { spawn } = require('child_process');
 let localDb = null;
 let isDbReady = false;
 
+const DB_FILE = path.join(__dirname, 'data', 'podcastindex_feeds.db');
+
 function initLocalDb() {
-    if (fs.existsSync('podcastindex_feeds.db')) {
+    if (fs.existsSync(DB_FILE)) {
         console.log("God-Mode Database File Detected. Initializing connection...");
-        localDb = new sqlite3.Database('podcastindex_feeds.db', sqlite3.OPEN_READONLY, (err) => {
+        localDb = new sqlite3.Database(DB_FILE, sqlite3.OPEN_READONLY, (err) => {
             if (err) {
                 console.error("Warning: Could not connect to the 10GB God-Mode dataset.", err.message);
             } else {
@@ -44,7 +47,7 @@ function initLocalDb() {
             }
         });
     } else {
-        console.warn("[DATABASE] Warning: 10GB God-Mode dataset (podcastindex_feeds.db) NOT FOUND.");
+        console.warn("[DATABASE] Warning: 10GB God-Mode dataset NOT FOUND at " + DB_FILE);
         console.log("[DATABASE] Initiating background database download/setup (this handles multi-GB file fully in the background to allow instant boot and pass healthchecks)...");
         
         const downloader = spawn('node', ['download_db.js'], { stdio: 'inherit' });

@@ -118,14 +118,8 @@ function updateScanLimitUI() {
     if (freeScanDisplay) freeScanDisplay.textContent = left;
 }
 
-const clearBtn = document.getElementById('clearCookiesBtn');
-if (clearBtn) {
-    clearBtn.addEventListener('click', () => {
-        document.cookie = "scanLimitCount=0; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        updateScanLimitUI();
-        alert("Cookie registry wiped. Scanner counts reset to factory default!");
-    });
-}
+// Counter reset backdoor disabled by order of Pilot Command.
+
 
 /* --- 3. SCANNING ENGINE & GATES --- */
 async function autoPopulateScanner() {
@@ -334,26 +328,33 @@ async function handlePlatformBoost() {
         if (typeof window.webln === 'undefined') throw new Error("WebLN wallet not detected!");
         await window.webln.enable();
         
-        // Real Keysend
-        const res = await window.webln.keysend({
-            destination: "03236a6f1bb9eb41cc6f140683a3721349509df73950bcebb6ebf5d9d7a229ce3d",
-            amount: amtSats,
-            customRecords: { 34349334: `Platform Boost from Pilot ID ${currentUser.id}` }
-        });
-
-        alert(`Boost Dispatched successfully! Invoice hash: ${res.preimage.substring(0,12)}... Waiting for ledger synchronization.`);
-
-        // Record simulation deposit
-        const depRes = await fetch(`${API_BASE}/deposit`, {
+        // 1. Request real Bolt11 Invoice from backend
+        const invRes = await fetch(`${API_BASE}/invoice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: currentUser.id, amount_sats: amtSats, provider: 'ALBY' })
+            body: JSON.stringify({ amount: amtSats, description: `Platform Boost from Pilot ID ${currentUser.id}` })
         });
-        const depData = await depRes.json();
-        if (depData.success) {
-            currentUser.credit_balance_sats += amtSats;
-            updateWalletUI();
-        }
+        const invData = await invRes.json();
+        if (!invData.payment_request) throw new Error("Could not generate Lightning network invoice.");
+
+        // 2. Pay invoice using real wallet balance
+        const payResult = await window.webln.sendPayment(invData.payment_request);
+
+        alert(`✅ BOOST VERIFIED & DISPATCHED!\n\nReal-world Satoshis received directly in platform balance. Commencing 3-way fractional revenue split!`);
+
+        // 3. Record real platform boost ledger entry & trigger revenue split
+        const boostRes = await fetch(`${API_BASE}/boost`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                user_id: currentUser.id, 
+                amount_sats: amtSats, 
+                reference_id: payResult.preimage || invData.payment_hash
+            })
+        });
+        const boostData = await boostRes.json();
+        if (!boostRes.ok) console.warn("Ledger split update failed:", boostData.error);
+
     } catch (e) {
         alert("Boost failed: " + e.message);
     }
@@ -428,20 +429,37 @@ if (btnAlby) {
         if(isNaN(amtSats) || amtSats < 10) return;
 
         try {
-            await window.webln.keysend({
-                destination: "03236a6f1bb9eb41cc6f140683a3721349509df73950bcebb6ebf5d9d7a229ce3d",
-                amount: amtSats
+            if (typeof window.webln === 'undefined') throw new Error("WebLN not available.");
+            await window.webln.enable();
+
+            // 1. Request real network invoice from backend
+            const invRes = await fetch(`${API_BASE}/invoice`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: amtSats, description: `Funding Cockpit Wallet for Pilot ID ${currentUser.id}` })
             });
+            const invData = await invRes.json();
+            if (!invData.payment_request) throw new Error("Failed to generate invoice.");
+
+            // 2. Direct real-world payment of invoice
+            const payResult = await window.webln.sendPayment(invData.payment_request);
+
+            // 3. Securely credit user's platform ledger
             const depRes = await fetch(`${API_BASE}/deposit`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user_id: currentUser.id, amount_sats: amtSats, provider: 'ALBY' })
+                body: JSON.stringify({ 
+                    user_id: currentUser.id, 
+                    amount_sats: amtSats, 
+                    provider: 'ALBY',
+                    reference_id: payResult.preimage || invData.payment_hash 
+                })
             });
             const d = await depRes.json();
-            if(d.success) {
+            if (d.success) {
                 currentUser.credit_balance_sats += amtSats;
                 updateWalletUI();
-                alert(`Loaded ${amtSats} platform credits successfully!`);
+                alert(`🎉 DEPOSIT CONFIRMED!\n\nSuccessfully loaded ${amtSats} platform credits!`);
             }
         } catch(e) {
             alert("Funding rejected: " + e.message);

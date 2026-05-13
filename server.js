@@ -241,6 +241,10 @@ app.post('/api/invoice', async (req, res) => {
     const ALBY_TOKEN = process.env.ALBY_ACCESS_TOKEN;
     if (!ALBY_TOKEN) return res.status(500).json({ error: "Server missing Alby Token" });
 
+    const { amount, description } = req.body;
+    const finalAmount = parseInt(amount, 10) || 1000;
+    const finalDesc = description || "Spider Assayer Platform Service";
+
     try {
         const response = await fetch("https://api.getalby.com/invoices", {
             method: "POST",
@@ -249,12 +253,15 @@ app.post('/api/invoice', async (req, res) => {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                amount: 1234,
-                description: "Spider Assayer: Deep Hash Verification"
+                amount: finalAmount,
+                description: finalDesc
             })
         });
 
-        if (!response.ok) throw new Error("Failed to generate Alby invoice");
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Failed to generate Alby invoice: ${errText}`);
+        }
         const data = await response.json();
         
         // Returns the payment_request (bolt11) and the payment_hash
@@ -263,6 +270,7 @@ app.post('/api/invoice', async (req, res) => {
             payment_hash: data.payment_hash
         });
     } catch (error) {
+        console.error("[INVOICE ERR]", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -300,6 +308,23 @@ app.post('/api/deposit', (req, res) => {
             
         res.json({ success: true, new_balance: amount_sats }); // simplified
     });
+});
+
+app.post('/api/boost', (req, res) => {
+    const { user_id, amount_sats, reference_id } = req.body;
+    const cost = parseInt(amount_sats, 10) || 0;
+    if (cost <= 0) return res.status(400).json({ error: "Invalid boost amount." });
+
+    // Record directly in ledger as positive incoming boost volume that undergoes Sat Split!
+    db.run("INSERT INTO ledger_transactions (user_id, type, provider, amount_sats, reference_id) VALUES (?, 'BOOST', 'ALBY', ?, ?)", 
+        [user_id, cost, reference_id], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            
+            // Instantly distribute Platform Boost value across Index, Jackpot, and House
+            executeSatSplit(cost, this.lastID);
+            
+            res.json({ success: true, message: "Platform Boost Split Actioned Successfully!" });
+        });
 });
 
 app.post('/api/verify-ledger', (req, res) => {

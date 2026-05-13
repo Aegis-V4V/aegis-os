@@ -8,6 +8,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Unauthenticated healthcheck endpoint for Railway to prevent 401 healthcheck failures
+app.get('/health', (req, res) => res.status(200).send('OK'));
+
 // --- Phase 9: Secure Monolith Publishing ---
 const authUser = process.env.BASIC_AUTH_USER || 'Pc2.0-Guest';
 const authPass = process.env.BASIC_AUTH_PASS || 'rCh4fw56t@@8MA';

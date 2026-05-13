@@ -726,13 +726,15 @@ const checkoutTemplates = {
         `
     },
     PAYPAL: {
-        title: "PayPal Direct Ledger",
+        title: "PayPal Direct Ledger Interface",
         html: `
-            <span class="checkout-brand-tag tag-paypal">PayPal Bridge</span>
-            <p class="dim-text" style="margin-bottom:15px;">Authenticate bridge via secure PayPal fiat ledger hookup.</p>
-            <div class="checkout-form-group">
-                <label>PAYPAL ACCOUNT EMAIL</label>
-                <input type="email" class="checkout-input" placeholder="pilot@starfleet.mil">
+            <span class="checkout-brand-tag tag-paypal">PayPal REST Gateway</span>
+            <p class="dim-text" style="margin-bottom:12px; font-size:0.8rem;">
+                Choose space credit amount below, then authorize securely via official PayPal popups. 
+                Settlement handshakes are verified instantly!
+            </p>
+            <div id="paypal-button-container" style="min-height:150px; display:flex; align-items:center; justify-content:center; margin-top:10px;">
+                <div class="spinner"></div>
             </div>
         `
     },
@@ -760,6 +762,111 @@ const checkoutTemplates = {
     }
 };
 
+function loadPayPalSdkAndRender(satsAmount) {
+    const container = document.getElementById('paypal-button-container');
+    if (!container) return;
+
+    if (window.paypal) {
+        renderPayPalButtons(satsAmount);
+        return;
+    }
+
+    const CLIENT_ID = "AS5LfHZ2pZ83cfG6j4hJznVoxcnNF9sN-T1mptAwKOE4jKkbN-TicQL4YTK0YsoFFefO_yFk_e_lkBuC";
+    const script = document.createElement('script');
+    script.src = `https://www.paypal.com/sdk/js?client-id=${CLIENT_ID}&currency=USD&components=buttons`;
+    script.async = true;
+    
+    script.onload = () => {
+        renderPayPalButtons(satsAmount);
+    };
+    
+    script.onerror = () => {
+        container.innerHTML = `<p style="color:red;font-size:0.8rem;">Spatial Frequency Blocked: Failed to connect to PayPal network.</p>`;
+    };
+
+    document.head.appendChild(script);
+}
+
+function renderPayPalButtons(satsAmount) {
+    const container = document.getElementById('paypal-button-container');
+    if (!container) return;
+    container.innerHTML = ''; 
+
+    try {
+        window.paypal.Buttons({
+            style: {
+                color: 'gold',
+                shape: 'rect',
+                label: 'checkout',
+                height: 45
+            },
+            createOrder: async function() {
+                // Evaluated dynamically at instant of click
+                const currentSats = parseInt(checkoutSatInput.value, 10) || 1000;
+                
+                const res = await fetch(`${API_BASE}/paypal/create-order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount_sats: currentSats })
+                });
+                
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Failed to initialize secure order.");
+                return data.id;
+            },
+            
+            onApprove: async function(data) {
+                const currentSats = parseInt(checkoutSatInput.value, 10) || 1000;
+                
+                // Inject visual capture loader over buttons
+                container.innerHTML = `
+                    <div class="checkout-loader" style="gap:10px;">
+                        <div class="spinner"></div>
+                        <p class="glow-text">// CAPTURING LEDGER FLIGHT FUNDS...</p>
+                        <p class="dim-text">Cryptographically signing SQLite credit injection...</p>
+                    </div>
+                `;
+                
+                try {
+                    const res = await fetch(`${API_BASE}/paypal/capture-order`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            orderID: data.orderID,
+                            user_id: currentUser.id,
+                            amount_sats: currentSats
+                        })
+                    });
+                    const capData = await res.json();
+                    
+                    if (capData.success) {
+                        // Instant Memory and Wallet Ledger HUD update
+                        currentUser.credit_balance_sats += currentSats;
+                        if (tokenBalance) tokenBalance.textContent = currentUser.credit_balance_sats;
+                        if (tokenBalanceInline) tokenBalanceInline.textContent = currentUser.credit_balance_sats;
+                        updateReportBtnState();
+                        
+                        alert(`🚀 DEPOSIT CONFIRMED!\n\nProcessor handshake completed successfully.\nDeposited ${currentSats} Credits securely into persistent ledger!`);
+                        closeCheckout();
+                    } else {
+                        throw new Error(capData.error || "Spatial verification signature block.");
+                    }
+                } catch (err) {
+                    alert("Settlement Failure: " + err.message);
+                    closeCheckout();
+                }
+            },
+            
+            onError: function(err) {
+                console.error("[PAYPAL SDK CORE ERR]", err);
+                alert("PayPal pipeline error: Check developer dashboard logs.");
+            }
+        }).render('#paypal-button-container');
+    } catch(e) {
+        container.innerHTML = `<p style="color:red;font-size:0.8rem;">Pipeline Block: Render engine error.</p>`;
+    }
+}
+
 function openCheckout(provider) {
     if (!currentUser) return alert("Connect Pilot identity profile first to initialize funding bridges!");
     activeCheckoutProvider = provider;
@@ -769,11 +876,21 @@ function openCheckout(provider) {
     if (checkoutTitle) checkoutTitle.textContent = tmpl.title;
     if (checkoutBody) checkoutBody.innerHTML = tmpl.html;
     if (checkoutModal) checkoutModal.classList.remove('hidden');
+
+    // Config overrides for live PayPal gateway
+    if (provider === 'PAYPAL') {
+        if (processPaymentBtn) processPaymentBtn.style.display = 'none'; // Hide manual trigger
+        const initialSats = parseInt(checkoutSatInput.value, 10) || 1000;
+        loadPayPalSdkAndRender(initialSats);
+    } else {
+        if (processPaymentBtn) processPaymentBtn.style.display = 'block';
+    }
 }
 
 function closeCheckout() {
     if (checkoutModal) checkoutModal.classList.add('hidden');
     activeCheckoutProvider = null;
+    if (processPaymentBtn) processPaymentBtn.style.display = 'block'; // Reset to default
 }
 
 if (closeCheckoutBtn) closeCheckoutBtn.addEventListener('click', closeCheckout);

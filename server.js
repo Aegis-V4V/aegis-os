@@ -21,6 +21,10 @@ app.use(basicAuth({
     realm: 'Antigravity Spaceship'
 }));
 
+// --- Phase 2.3: Fiat-to-Sat Evaluation Policy ---
+// Evaluated weekly via .env to adjust for spatial market drift!
+const USD_PER_SAT = parseFloat(process.env.USD_PER_SAT) || 0.0007; // 1000 SATS = $0.70 USD
+
 // Serve compiled frontend statically using robust absolute path mapping
 const distPath = path.join(__dirname, 'frontend', 'dist');
 app.use(express.static(distPath));
@@ -335,6 +339,105 @@ app.post('/api/deposit', (req, res) => {
             
         res.json({ success: true, new_balance: amount_sats }); // simplified
     });
+});
+
+// --- 🅿️ PAYPAL REST API GATEWAY ENGINE (v2.3) ---
+const PAYPAL_CLIENT_ID = process.env.PAYPAL_CLIENT_ID;
+const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET;
+const PAYPAL_BASE = "https://api-m.sandbox.paypal.com"; 
+
+async function getPayPalAccessToken() {
+    if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+        throw new Error("System missing active PayPal Credentials in .env!");
+    }
+    const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString("base64");
+    const res = await fetch(`${PAYPAL_BASE}/v1/oauth2/token`, {
+        method: "POST",
+        body: "grant_type=client_credentials",
+        headers: {
+            Authorization: `Basic ${auth}`,
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+    });
+    const data = await res.json();
+    return data.access_token;
+}
+
+// 1. Create PayPal Order
+app.post('/api/paypal/create-order', async (req, res) => {
+    const { amount_sats } = req.body;
+    const sats = parseInt(amount_sats, 10);
+    if (isNaN(sats) || sats <= 0) return res.status(400).json({ error: "Invalid Satoshi amount." });
+
+    // Convert exact Satoshis to USD using weekly evaluated rate
+    const usdVal = (sats * USD_PER_SAT).toFixed(2); 
+    
+    try {
+        const token = await getPayPalAccessToken();
+        const response = await fetch(`${PAYPAL_BASE}/v2/checkout/orders`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                intent: "CAPTURE",
+                purchase_units: [{
+                    amount: {
+                        currency_code: "USD",
+                        value: usdVal
+                    },
+                    description: `Space Credits: ${sats} SATs Deposit`
+                }]
+            })
+        });
+        
+        const order = await response.json();
+        if (!order.id) throw new Error(order.message || "Order creation refused by gateway.");
+        
+        console.log(`[PAYPAL] Order Created: ${order.id} // Cost: $${usdVal} USD for ${sats} SATs`);
+        res.json({ id: order.id });
+    } catch (error) {
+        console.error("[PAYPAL CREATE ERR]", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 2. Capture & Commit Ledger
+app.post('/api/paypal/capture-order', async (req, res) => {
+    const { orderID, user_id, amount_sats } = req.body;
+    if (!orderID || !user_id || !amount_sats) return res.status(400).json({ error: "Missing payload." });
+    
+    try {
+        const token = await getPayPalAccessToken();
+        const response = await fetch(`${PAYPAL_BASE}/v2/checkout/orders/${orderID}/capture`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            }
+        });
+        
+        const captureData = await response.json();
+        if (captureData.status === "COMPLETED") {
+            const sats = parseInt(amount_sats, 10);
+            console.log(`[PAYPAL] Capture Success: Order ${orderID} // Crediting ${sats} SATs to user ${user_id}`);
+            
+            db.run("UPDATE users SET credit_balance_sats = credit_balance_sats + ? WHERE id = ?", [sats, user_id], (err) => {
+                if (err) return res.status(500).json({ error: "Internal DB update error." });
+                
+                db.run("INSERT INTO ledger_transactions (user_id, type, provider, amount_sats, reference_id) VALUES (?, 'DEPOSIT', 'PAYPAL', ?, ?)", 
+                    [user_id, sats, orderID]);
+                    
+                res.json({ success: true, status: "COMPLETED" });
+            });
+        } else {
+            throw new Error(`Transaction Incomplete: ${captureData.status}`);
+        }
+    } catch (error) {
+        console.error("[PAYPAL CAPTURE ERR]", error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 app.post('/api/boost', (req, res) => {

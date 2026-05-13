@@ -1,4 +1,5 @@
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
+// Pull global THREE instance established by index.html script load to ensure OrbitControls pairing
+const THREE = window.THREE;
 
 // Master Handoff Hooks for main.js
 window.plotStarNeighborhood = null;

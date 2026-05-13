@@ -489,7 +489,7 @@ mqttClient.on('connect', () => {
 // --- Phase 8: True Global State & Time-Based Lotteries ---
 const cron = require('node-cron');
 let dailyCargo = [];
-let jackpotPool = 5000; // Starting pool fallback
+let jackpotPool = 0; // Initialized at 0 SATs
 
 // Project Astrogation: Restore persistent global jackpot state on startup
 db.get("SELECT value FROM system_state WHERE key = 'global_jackpot'", (err, row) => {
@@ -619,7 +619,7 @@ cron.schedule('59 59 23 * * *', () => {
 
         // Reset global state
         dailyCargo = [];
-        jackpotPool = 1000;
+        jackpotPool = 0;
 
         // Tell clients to clear their visual bays
         wss.clients.forEach(c => {

@@ -494,7 +494,7 @@ if (btnAlby) {
 
 /* --- 7. V4V RADIO HUD DECK LOGIC (Astrogation v2.1) --- */
 let currentTrackIdx = Math.floor(Math.random() * V4V_TRACKS.length);
-let isRadioPlaying = true; // Visual play state by default
+let isRadioPlaying = false; // Start paused to satisfy browser Audio policies and await user interaction
 let radioTimer = null;
 
 const radioPlayBtn = document.getElementById('radioPlayBtn');
@@ -504,32 +504,60 @@ const radioTrackText = document.getElementById('radioTrack');
 const radioArtistText = document.getElementById('radioArtist');
 const radioViz = document.querySelector('.radio-viz');
 
-// Optimized Sci-Fi Low Ambient Synthesizer Oscillator
+// Dynamic Cyberpunk Synth Arpeggiator Loop Core
 let synthCtx = null;
-let carrierNode = null;
+let arpeggioTimeout = null;
+
+function playNextRetroSynthNote() {
+    if (!isRadioPlaying || !synthCtx) return;
+    
+    try {
+        if (synthCtx.state === 'suspended') synthCtx.resume();
+        
+        const now = synthCtx.currentTime;
+        const osc = synthCtx.createOscillator();
+        const filter = synthCtx.createBiquadFilter();
+        const gainNode = synthCtx.createGain();
+        
+        // 🌌 Classic A minor pentatonic chord arpeggio
+        const scale = [130.81, 146.83, 164.81, 196.00, 220.00, 261.63, 329.63, 392.00, 440.00];
+        const freq = scale[Math.floor(Math.random() * scale.length)];
+        
+        osc.type = (Math.random() > 0.5) ? 'triangle' : 'sawtooth';
+        osc.frequency.setValueAtTime(freq, now);
+        
+        // Sci-fi filter frequency sweep
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(1100, now);
+        filter.frequency.exponentialRampToValueAtTime(150, now + 0.85);
+        
+        // Volume envelope preventing clicks
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.035, now + 0.12); 
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
+        
+        osc.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(synthCtx.destination);
+        
+        osc.start(now);
+        osc.stop(now + 1.0);
+    } catch (e) {
+        console.error("[SYNTH BLOCK]", e);
+    }
+
+    // Retro syncopated timing
+    const tempo = (Math.random() > 0.75) ? 600 : 300;
+    arpeggioTimeout = setTimeout(playNextRetroSynthNote, tempo);
+}
 
 function initRadioAudio() {
     try {
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         synthCtx = new AudioContext();
-        
-        // Atmospheric station drone 72.7 Hz
-        carrierNode = synthCtx.createOscillator();
-        const gainNode = synthCtx.createGain();
-        
-        carrierNode.type = 'sine';
-        carrierNode.frequency.setValueAtTime(72.7, synthCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.0001, synthCtx.currentTime); 
-        
-        carrierNode.connect(gainNode);
-        gainNode.connect(synthCtx.destination);
-        
-        carrierNode.start();
-        gainNode.gain.exponentialRampToValueAtTime(0.02, synthCtx.currentTime + 2);
-        window.stationGainNode = gainNode;
-        console.log("[V4V RADIO] Ambient Synthesis Module Activated.");
+        console.log("[V4V RADIO] Master CyberSynth Engine Fired.");
     } catch(e) {
-        console.warn("[V4V RADIO] Audio blocked by system:", e);
+        console.warn("[V4V RADIO] Audio creation failed:", e);
     }
 }
 
@@ -541,9 +569,11 @@ function updateTrackDisplay() {
     if (isRadioPlaying) {
         if(radioViz) radioViz.style.animationPlayState = 'running';
         if(radioViz) radioViz.style.background = '#4ade80';
+        if(radioPlayBtn) radioPlayBtn.textContent = "PAUSE";
     } else {
         if(radioViz) radioViz.style.animationPlayState = 'paused';
         if(radioViz) radioViz.style.background = '#475569';
+        if(radioPlayBtn) radioPlayBtn.textContent = "PLAY";
     }
 }
 
@@ -552,7 +582,7 @@ function cycleRadioTracks() {
     currentTrackIdx = (currentTrackIdx + 1) % V4V_TRACKS.length;
     updateTrackDisplay();
     clearTimeout(radioTimer);
-    radioTimer = setTimeout(cycleRadioTracks, 25000 + Math.random() * 15000);
+    radioTimer = setTimeout(cycleRadioTracks, 20000 + Math.random() * 10000);
 }
 
 if (radioPlayBtn) {
@@ -561,12 +591,10 @@ if (radioPlayBtn) {
         
         isRadioPlaying = !isRadioPlaying;
         if (isRadioPlaying) {
-            radioPlayBtn.textContent = "PAUSE";
-            if (window.stationGainNode && synthCtx) window.stationGainNode.gain.exponentialRampToValueAtTime(0.02, synthCtx.currentTime + 0.8);
+            playNextRetroSynthNote();
             cycleRadioTracks();
         } else {
-            radioPlayBtn.textContent = "PLAY";
-            if (window.stationGainNode && synthCtx) window.stationGainNode.gain.exponentialRampToValueAtTime(0.0001, synthCtx.currentTime + 0.8);
+            clearTimeout(arpeggioTimeout);
             clearTimeout(radioTimer);
         }
         updateTrackDisplay();
@@ -627,9 +655,9 @@ if (radioBoostBtn) {
     });
 }
 
-// Initiate Radio Loop
+// Complete Initial Load Routine
+currentTrackIdx = Math.floor(Math.random() * V4V_TRACKS.length);
 updateTrackDisplay();
-radioTimer = setTimeout(cycleRadioTracks, 25000);
 
 if (btnStrike) {
     btnStrike.addEventListener('click', () => {

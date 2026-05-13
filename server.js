@@ -23,19 +23,51 @@ app.use(express.static('frontend/dist'));
 const db = require('./db');
 const sqlite3 = require('sqlite3').verbose();
 
-// Phase 6: God-Mode Local Database (Read-Only)
-const localDb = new sqlite3.Database('podcastindex_feeds.db', sqlite3.OPEN_READONLY, (err) => {
-    if (err) {
-        console.error("Warning: Could not connect to the 10GB God-Mode dataset.", err.message);
+// Phase 6/9: Self-Healing God-Mode Local Database (Read-Only & Background Setup)
+const fs = require('fs');
+const { spawn } = require('child_process');
+let localDb = null;
+let isDbReady = false;
+
+function initLocalDb() {
+    if (fs.existsSync('podcastindex_feeds.db')) {
+        console.log("God-Mode Database File Detected. Initializing connection...");
+        localDb = new sqlite3.Database('podcastindex_feeds.db', sqlite3.OPEN_READONLY, (err) => {
+            if (err) {
+                console.error("Warning: Could not connect to the 10GB God-Mode dataset.", err.message);
+            } else {
+                console.log("God-Mode Database Connected Successfully!");
+                isDbReady = true;
+            }
+        });
     } else {
-        console.log("God-Mode Database Connected.");
+        console.warn("[DATABASE] Warning: 10GB God-Mode dataset (podcastindex_feeds.db) NOT FOUND.");
+        console.log("[DATABASE] Initiating background database download/setup (this handles multi-GB file fully in the background to allow instant boot and pass healthchecks)...");
+        
+        const downloader = spawn('node', ['download_db.js'], { stdio: 'inherit' });
+        downloader.on('close', (code) => {
+            if (code === 0) {
+                console.log("[DATABASE] Background downloader finished successfully! Re-initializing database connection...");
+                initLocalDb();
+            } else {
+                console.error(`[DATABASE] Background downloader failed with code ${code}. Operating in standalone mode.`);
+            }
+        });
     }
-});
+}
+initLocalDb();
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
 
 // --- Phase 6: Auto-Populate Endpoint ---
 app.get('/api/random-top', (req, res) => {
+    if (!isDbReady) {
+        return res.status(503).json({ 
+            success: false, 
+            error: "Database initializing", 
+            message: "The 10GB Podcast Index database is currently downloading in the background. Please wait 5 minutes and try again." 
+        });
+    }
     // Uses the idx_popularity index, making this blazing fast.
     localDb.all(`SELECT title, url FROM podcasts ORDER BY popularityScore DESC LIMIT 1000`, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -258,7 +290,7 @@ app.post('/api/verify-ledger', (req, res) => {
     });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const http = require('http');
 const server = http.createServer(app);
 const WebSocket = require('ws');
@@ -298,6 +330,20 @@ mqttClient.on('message', async (topic, message) => {
             const enrichedDrops = [];
 
             for (const url of urls) {
+                if (!isDbReady) {
+                    // Safe fallback if database is still downloading
+                    const drop = {
+                        url: url,
+                        title: 'Initializing Broadcast...',
+                        image: null,
+                        description: 'The God-Mode database is downloading in the background.',
+                        isCompliant: Math.random() > 0.6
+                    };
+                    enrichedDrops.push(drop);
+                    dailyCargo.push(drop);
+                    continue;
+                }
+                
                 // Query local 10GB database for metadata
                 await new Promise((resolve) => {
                     localDb.get("SELECT title, image, description FROM podcasts WHERE url = ?", [url], (err, row) => {
@@ -365,6 +411,6 @@ cron.schedule('59 59 23 * * *', () => {
     timezone: "America/New_York"
 });
 
-server.listen(PORT, () => {
-    console.log(`Spaceship API Wrapper & Cargo Bay Stream listening on http://localhost:${PORT}`);
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Spaceship API Wrapper & Cargo Bay Stream listening on http://0.0.0.0:${PORT}`);
 });

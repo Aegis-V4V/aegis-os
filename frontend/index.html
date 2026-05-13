@@ -206,32 +206,32 @@
                   <div class="payment-card option-alby">
                     <h3>Lightning Extension</h3>
                     <p class="dim-text">Real-time WebLN keysends.</p>
-                    <button class="pay-btn btn-alby" disabled>FUND VIA ALBY</button>
+                    <button class="pay-btn btn-alby" disabled id="btn-alby">FUND VIA ALBY</button>
                   </div>
                   <div class="payment-card option-strike">
                     <h3>Strike API</h3>
                     <p class="dim-text">Fast fiat-to-lightning portal.</p>
-                    <button class="pay-btn btn-strike" disabled>FUND VIA STRIKE</button>
+                    <button class="pay-btn btn-strike" id="btn-strike">FUND VIA STRIKE</button>
                   </div>
-                  <div class="payment-card disabled">
+                  <div class="payment-card option-paypal">
                     <h3>PayPal Ledger</h3>
                     <p class="dim-text">Direct fiat bridge.</p>
-                    <button class="pay-btn disabled" disabled>COMING SOON</button>
+                    <button class="pay-btn btn-paypal" id="btn-paypal">FUND VIA PAYPAL</button>
                   </div>
-                  <div class="payment-card disabled">
+                  <div class="payment-card option-stripe">
                     <h3>Stripe Portal</h3>
                     <p class="dim-text">Credit/Debit checkout.</p>
-                    <button class="pay-btn disabled" disabled>COMING SOON</button>
+                    <button class="pay-btn btn-stripe-fiat" id="btn-stripe">FUND VIA STRIPE</button>
                   </div>
-                  <div class="payment-card disabled">
+                  <div class="payment-card option-cashapp">
                     <h3>CashApp Pay</h3>
                     <p class="dim-text">Direct mobile tag deposit.</p>
-                    <button class="pay-btn disabled" disabled>COMING SOON</button>
+                    <button class="pay-btn btn-cashapp" id="btn-cashapp">FUND VIA CASHAPP</button>
                   </div>
-                  <div class="payment-card disabled">
+                  <div class="payment-card option-opennode">
                     <h3>OpenNode API</h3>
                     <p class="dim-text">Enterprise BTC processor.</p>
-                    <button class="pay-btn disabled" disabled>COMING SOON</button>
+                    <button class="pay-btn btn-opennode" id="btn-opennode">FUND VIA OPENNODE</button>
                   </div>
                 </div>
               </div>
@@ -348,6 +348,51 @@
         </div>
 
       </div> <!-- End Cockpit Bezel -->
+    <!-- FUTURISTIC EULA PILOT GATE -->
+    <div id="eulaOverlay" class="eula-backdrop hidden">
+      <div class="eula-box">
+        <div class="eula-header">
+          <h2>ANTIGRAVITY SYSTEMS // PILOT ACCORD</h2>
+          <span class="eula-version">REF: AG-SYS-V2.2</span>
+        </div>
+        <div class="eula-content">
+          <h3>1. PILOT BINDING DECREE</h3>
+          <p>By booting this navigation deck and connecting your sovereign ledger, you ("Pilot") accept absolute liability for interstellar coordinate alignment. Entry into the galactic rift subqueries without verified credits is monitored by deep space protocols.</p>
+          
+          <h3>2. LEDGER COMPLIANCE</h3>
+          <p>Value4Value routing via Alby, Strike, Stripe, CashApp, PayPal, or OpenNode represents direct cryptographic/fiat bridged settlement. Consumed credits (1 SAT = 1 Space Credit) are irreversibly processed via standard 3-way ledger splits (Index, Jackpot, House/Artist).</p>
+          
+          <h3>3. HAZARD INDEMNIFICATION</h3>
+          <p>Space travel, zero-gravity cargo maneuvers, and recursive SQL deep-hashes contain digital hazards. Antigravity Systems is not liable for localized temporal drift or ledger preimage collisions during third-party hosting failures.</p>
+          
+          <p class="glow-text">// ACTIVATING MATRIX REQUIRES EXPLICIT VERIFICATION.</p>
+        </div>
+        <div class="eula-actions">
+          <button id="acceptEulaBtn" class="glow-btn">I AGREE & ENGAGE REACTOR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- UNIFIED CHECKOUT MODAL -->
+    <div id="checkoutModal" class="checkout-overlay hidden">
+      <div class="checkout-box">
+        <div class="checkout-header">
+          <h3 id="checkoutTitle">Initialize Core Portal</h3>
+          <button id="closeCheckoutBtn" class="preview-close">&times;</button>
+        </div>
+        <div class="checkout-body" id="checkoutBody">
+          <!-- Dynamic Checkout UI Injected via JS -->
+        </div>
+        <div class="checkout-footer">
+          <div class="checkout-cost-row">
+            <span>AMOUNT TO DEPOSIT (SATS):</span>
+            <input type="number" id="checkoutSatInput" value="1000" min="100" class="sat-input">
+          </div>
+          <button id="processPaymentBtn" class="glow-btn">AUTHORIZE DEPOSIT</button>
+        </div>
+      </div>
+    </div>
+
     </div> <!-- End Bridge Shell -->
 
     <!-- SCRIPTS -->

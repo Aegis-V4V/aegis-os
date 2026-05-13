@@ -638,3 +638,237 @@ body {
   margin: 0;
   box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 }
+
+/* --- EULA PILOT GATE STYLES (v2.2) --- */
+.eula-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.95);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000; /* Super high override */
+  transition: opacity 0.5s ease;
+}
+.eula-backdrop.hidden {
+  display: none;
+  pointer-events: none;
+  opacity: 0;
+}
+.eula-box {
+  width: 550px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 2px solid var(--neon-green);
+  box-shadow: 0 0 40px rgba(74, 222, 128, 0.2), inset 0 0 20px rgba(0, 0, 0, 0.8);
+  border-radius: 12px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: var(--font-sans);
+}
+.eula-header {
+  border-bottom: 1px solid var(--neon-green);
+  padding-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.eula-header h2 {
+  font-family: var(--font-mono);
+  color: var(--neon-green);
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+.eula-version {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+.eula-content {
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 10px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+.eula-content h3 {
+  font-family: var(--font-mono);
+  color: #fff;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+}
+.eula-content p { margin-bottom: 10px; }
+.glow-text {
+  color: var(--neon-green);
+  font-family: var(--font-mono);
+  margin-top: 15px;
+  font-weight: bold;
+  text-shadow: 0 0 5px var(--neon-green);
+}
+.glow-btn {
+  width: 100%;
+  background: transparent;
+  border: 2px solid var(--neon-green);
+  color: var(--neon-green);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: bold;
+  padding: 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.glow-btn:hover {
+  background: var(--neon-green);
+  color: #000;
+  box-shadow: 0 0 20px var(--neon-green);
+}
+
+/* --- UNIFIED CHECKOUT MODAL STYLES (v2.2) --- */
+.checkout-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.checkout-overlay.hidden {
+  display: none;
+}
+.checkout-box {
+  width: 480px;
+  background: #0f172a;
+  border: 2px solid var(--neon-blue);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 30px rgba(56, 189, 248, 0.2);
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  animation: popUp 0.25s ease-out;
+}
+.checkout-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #334155;
+  padding-bottom: 10px;
+}
+.checkout-header h3 {
+  font-family: var(--font-mono);
+  color: var(--neon-blue);
+  font-size: 1.2rem;
+}
+.checkout-body {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.checkout-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.checkout-form-group label {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.checkout-input {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid #475569;
+  border-radius: 4px;
+  padding: 12px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  outline: none;
+}
+.checkout-input:focus {
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 5px rgba(56, 189, 248, 0.5);
+}
+.checkout-cost-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #334155;
+  padding-top: 15px;
+  margin-bottom: 15px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: #cbd5e1;
+}
+.sat-input {
+  background: #000;
+  border: 1px solid var(--amber);
+  color: var(--amber);
+  padding: 6px 10px;
+  border-radius: 4px;
+  width: 100px;
+  text-align: center;
+  font-weight: bold;
+  font-family: var(--font-mono);
+}
+.checkout-box .glow-btn {
+  border-color: var(--neon-blue);
+  color: var(--neon-blue);
+}
+.checkout-box .glow-btn:hover:not(:disabled) {
+  background: var(--neon-blue);
+  color: #000;
+  box-shadow: 0 0 20px var(--neon-blue);
+}
+.checkout-box .glow-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Branded Cards Theme overrides inside modal */
+.checkout-brand-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #000;
+  text-transform: uppercase;
+  margin-bottom: 15px;
+  align-self: flex-start;
+}
+.tag-stripe { background: #635bff; color: #fff; }
+.tag-strike { background: #fff; color: #000; }
+.tag-paypal { background: #0079c1; color: #fff; }
+.tag-cashapp { background: #00d632; color: #000; }
+.tag-opennode { background: #f7931a; color: #fff; }
+
+/* Loading Animations */
+.checkout-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  height: 100%;
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(56, 189, 248, 0.1);
+  border-left-color: var(--neon-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+

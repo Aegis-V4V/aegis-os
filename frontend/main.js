@@ -29,6 +29,23 @@ const btnStrike = document.querySelector('.btn-strike');
 const verifyBtn = document.querySelector('.btn-verify');
 const boostBtn = document.querySelector('.boost-btn');
 
+// EULA & Unified Checkout DOM Refs
+const eulaOverlay = document.getElementById('eulaOverlay');
+const acceptEulaBtn = document.getElementById('acceptEulaBtn');
+const checkoutModal = document.getElementById('checkoutModal');
+const checkoutTitle = document.getElementById('checkoutTitle');
+const checkoutBody = document.getElementById('checkoutBody');
+const checkoutSatInput = document.getElementById('checkoutSatInput');
+const processPaymentBtn = document.getElementById('processPaymentBtn');
+const closeCheckoutBtn = document.getElementById('closeCheckoutBtn');
+
+// Branded Payment Buttons
+const btnPaypal = document.getElementById('btn-paypal');
+const btnStripe = document.getElementById('btn-stripe');
+const btnCashapp = document.getElementById('btn-cashapp');
+const btnOpennode = document.getElementById('btn-opennode');
+let activeCheckoutProvider = null;
+
 // Modal Lead Gen
 const emailModal = document.getElementById('emailModal');
 const triggerReportBtn = document.getElementById('triggerReportBtn');
@@ -72,6 +89,21 @@ let debounceTimer;
 
 /* --- 1. INITIALIZATION & COCKPIT SWITCHES --- */
 document.addEventListener('DOMContentLoaded', () => {
+    // Setup EULA check
+    if (!localStorage.getItem('assayer_eula_accepted')) {
+        if (eulaOverlay) eulaOverlay.classList.remove('hidden');
+    }
+    if (acceptEulaBtn) {
+        acceptEulaBtn.addEventListener('click', () => {
+            localStorage.setItem('assayer_eula_accepted', 'true');
+            if (eulaOverlay) {
+                eulaOverlay.style.opacity = '0';
+                setTimeout(() => eulaOverlay.classList.add('hidden'), 500);
+            }
+            console.log("[SYSTEM] Pilot Agreement Signed. Matrix Activated.");
+        });
+    }
+
     // Clock Ticker
     setInterval(() => {
         const str = new Date().toLocaleTimeString();
@@ -659,9 +691,154 @@ if (radioBoostBtn) {
 currentTrackIdx = Math.floor(Math.random() * V4V_TRACKS.length);
 updateTrackDisplay();
 
-if (btnStrike) {
-    btnStrike.addEventListener('click', () => {
-        alert("Strike Checkout module loaded. Fiat-to-Lightning API key processing is active.");
+/* --- 8. UNIFIED CHECKOUT ENGINE (v2.2) --- */
+
+const checkoutTemplates = {
+    STRIPE: {
+        title: "Stripe Payment Gateway",
+        html: `
+            <span class="checkout-brand-tag tag-stripe">Stripe Portal</span>
+            <div class="checkout-form-group">
+                <label>CREDIT CARD NUMBER</label>
+                <input type="text" class="checkout-input" placeholder="4242 4242 4242 4242" maxlength="19">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div class="checkout-form-group" style="flex:1;">
+                    <label>EXPIRY</label>
+                    <input type="text" class="checkout-input" placeholder="MM/YY" maxlength="5">
+                </div>
+                <div class="checkout-form-group" style="flex:1;">
+                    <label>CVC</label>
+                    <input type="password" class="checkout-input" placeholder="***" maxlength="3">
+                </div>
+            </div>
+        `
+    },
+    STRIKE: {
+        title: "Strike Fiat-to-Lightning",
+        html: `
+            <span class="checkout-brand-tag tag-strike">Strike API</span>
+            <p class="dim-text" style="margin-bottom:15px;">Submit your global Strike handle to generate direct lightning invoice settlement.</p>
+            <div class="checkout-form-group">
+                <label>STRIKE USERNAME (@)</label>
+                <input type="text" class="checkout-input" placeholder="satoshistackers" value="">
+            </div>
+        `
+    },
+    PAYPAL: {
+        title: "PayPal Direct Ledger",
+        html: `
+            <span class="checkout-brand-tag tag-paypal">PayPal Bridge</span>
+            <p class="dim-text" style="margin-bottom:15px;">Authenticate bridge via secure PayPal fiat ledger hookup.</p>
+            <div class="checkout-form-group">
+                <label>PAYPAL ACCOUNT EMAIL</label>
+                <input type="email" class="checkout-input" placeholder="pilot@starfleet.mil">
+            </div>
+        `
+    },
+    CASHAPP: {
+        title: "CashApp Direct Deposit",
+        html: `
+            <span class="checkout-brand-tag tag-cashapp">CashApp Pay</span>
+            <p class="dim-text" style="margin-bottom:15px;">Input Cashtag identifier to direct mobile tag verification.</p>
+            <div class="checkout-form-group">
+                <label>CASHTAG ($)</label>
+                <input type="text" class="checkout-input" placeholder="AntigravityCo">
+            </div>
+        `
+    },
+    OPENNODE: {
+        title: "OpenNode BTC Processor",
+        html: `
+            <span class="checkout-brand-tag tag-opennode">OpenNode API</span>
+            <p class="dim-text" style="margin-bottom:15px;">Deploy direct enterprise Lightning settlement channel.</p>
+            <div class="checkout-form-group">
+                <label>EMAIL FOR PAYMENT RECEIPT</label>
+                <input type="email" class="checkout-input" placeholder="admin@opennode.com">
+            </div>
+        `
+    }
+};
+
+function openCheckout(provider) {
+    if (!currentUser) return alert("Connect Pilot identity profile first to initialize funding bridges!");
+    activeCheckoutProvider = provider;
+    const tmpl = checkoutTemplates[provider];
+    if (!tmpl) return;
+    
+    if (checkoutTitle) checkoutTitle.textContent = tmpl.title;
+    if (checkoutBody) checkoutBody.innerHTML = tmpl.html;
+    if (checkoutModal) checkoutModal.classList.remove('hidden');
+}
+
+function closeCheckout() {
+    if (checkoutModal) checkoutModal.classList.add('hidden');
+    activeCheckoutProvider = null;
+}
+
+if (closeCheckoutBtn) closeCheckoutBtn.addEventListener('click', closeCheckout);
+
+// Bind newly unlocked payments
+if (btnStrike) btnStrike.addEventListener('click', () => openCheckout('STRIKE'));
+if (btnPaypal) btnPaypal.addEventListener('click', () => openCheckout('PAYPAL'));
+if (btnStripe) btnStripe.addEventListener('click', () => openCheckout('STRIPE'));
+if (btnCashapp) btnCashapp.addEventListener('click', () => openCheckout('CASHAPP'));
+if (btnOpennode) btnOpennode.addEventListener('click', () => openCheckout('OPENNODE'));
+
+// Autorization loop
+if (processPaymentBtn) {
+    processPaymentBtn.addEventListener('click', async () => {
+        if (!currentUser || !activeCheckoutProvider) return;
+        const sats = parseInt(checkoutSatInput.value, 10);
+        if (isNaN(sats) || sats < 100) return alert("Minimum deposit threshold is 100 Satoshis.");
+        
+        try {
+            // 1. Visual simulator overlay
+            const prevHtml = checkoutBody.innerHTML;
+            checkoutBody.innerHTML = `
+                <div class="checkout-loader">
+                    <div class="spinner"></div>
+                    <p class="glow-text">// ROUTING PORTAL BRIDGE: ${activeCheckoutProvider}...</p>
+                    <p class="dim-text">Securing compliance & validating credentials...</p>
+                </div>
+            `;
+            processPaymentBtn.setAttribute('disabled', 'true');
+            processPaymentBtn.textContent = "AUTHORIZING...";
+            
+            // 2. Simulation Delay (2500ms)
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            
+            // 3. Execute SQLite Persistent Record
+            const res = await fetch(`${API_BASE}/deposit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: currentUser.id,
+                    amount_sats: sats,
+                    provider: activeCheckoutProvider
+                })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                // Sync application memory state
+                currentUser.credit_balance_sats += sats;
+                if (tokenBalance) tokenBalance.textContent = currentUser.credit_balance_sats;
+                if (tokenBalanceInline) tokenBalanceInline.textContent = currentUser.credit_balance_sats;
+                updateReportBtnState();
+                
+                alert(`💳 SETTLEMENT VERIFIED!\n\nProcessor [${activeCheckoutProvider}] authorized successfully.\nDeposited ${sats} Credits directly into active ledger!`);
+                closeCheckout();
+            } else {
+                throw new Error("Database failed core validation.");
+            }
+        } catch (err) {
+            alert("Bridge Failure: " + err.message);
+            closeCheckout();
+        } finally {
+            processPaymentBtn.removeAttribute('disabled');
+            processPaymentBtn.textContent = "AUTHORIZE DEPOSIT";
+        }
     });
 }
 

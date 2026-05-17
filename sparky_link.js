@@ -1,5 +1,5 @@
 // AEGIS SPARKY LINK | The Remote Intelligence Bridge
-// Connects the local Terminal to Sparky's Brain (192.168.0.176).
+// Connects the local Terminal to Chantecler-01's Brain (67.205.162.200).
 
 const axios = require('axios');
 

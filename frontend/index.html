@@ -1,406 +1,92 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Podcasting 2.0 Assayer Console</title>
-    <link rel="stylesheet" href="./style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;700&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <div class="bridge-shell">
-      
-      <!-- HARDWARE SCREEN BEZEL -->
-      <div class="cockpit-bezel">
-        
-        <!-- CURVED CRT VISOR LAYER -->
-        <div class="cockpit-screen">
-          <div class="scanlines-overlay"></div>
-          <div class="screen-glow"></div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEGIS OS | Intelligence Node</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="visuals.css">
+</head>
+<body>
 
-          <!-- SYSTEM TOP HEADER -->
-          <header class="cockpit-header">
-            <div class="system-id">
-              <span class="blink">●</span> USS ASSAYER // NAV-COM v2.0
-            </div>
-            <div class="jackpot-hud">
-              BOUNTY JACKPOT: <span id="bountyText" class="neon-green">0</span> SATS
-            </div>
-            <div class="system-clock" id="sysClock">00:00:00</div>
-          </header>
-
-          <!-- CENTRAL VIEWPORTS CONTAINER (THE 7 MONITORS) -->
-          <main class="cockpit-viewports" id="viewportsContainer">
-            
-            <!-- MONITOR 1: SCANNER BAY (THE ORIGINAL DASHBOARD) -->
-            <div class="viewport-panel active" id="monitor-scanner">
-              <div class="grid-dash">
-                
-                <!-- Feed Targeting Control -->
-                <section class="panel terminal-panel">
-                  <div class="panel-header">[01] FEED TARGETING SYSTEM <span class="help-trigger" data-tip="Link pilot ledger and scan RSS to compile fix-it compliance reports!">?</span></div>
-                  <div class="input-group">
-                    <input type="text" id="feedInput" placeholder="Enter RSS / Search Podcast Name..." autocomplete="off">
-                    <button id="scanBtn" class="action-btn">ENGAGE SCAN</button>
-                  </div>
-                  <div id="searchResults" class="search-results hidden"></div>
-                  <div class="current-target">
-                    <h3>LOCK ON: <span id="targetName" class="neon-text">AWAITING SECTOR TARGET</span></h3>
-                    <p id="targetUrl" class="dim-text">---</p>
-                  </div>
-                </section>
-
-                <!-- Gauges -->
-                <section class="panel gauges-panel">
-                  <div class="panel-header">[02] COMPLIANCE LEVEL</div>
-                  <div class="gauges-container">
-                    <div class="gauge-wrapper">
-                      <svg class="gauge" viewBox="0 0 100 100">
-                        <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
-                        <circle class="gauge-fill" id="omniGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-                      </svg>
-                      <div class="gauge-label"><span id="omniText" class="gauge-value">0</span><span class="gauge-title">OMNI</span></div>
-                    </div>
-                    <div class="gauge-wrapper small-gauge">
-                      <svg class="gauge" viewBox="0 0 100 100">
-                        <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
-                        <circle class="gauge-fill v4v-fill" id="v4vGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-                      </svg>
-                      <div class="gauge-label"><span id="v4vText" class="gauge-value">0</span><span class="gauge-title">V4V</span></div>
-                    </div>
-                    <div class="gauge-wrapper small-gauge">
-                      <svg class="gauge" viewBox="0 0 100 100">
-                        <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
-                        <circle class="gauge-fill tech-fill" id="techGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-                      </svg>
-                      <div class="gauge-label"><span id="techText" class="gauge-value">0</span><span class="gauge-title">TECH</span></div>
-                    </div>
-                    <div class="gauge-wrapper small-gauge">
-                      <svg class="gauge" viewBox="0 0 100 100">
-                        <circle class="gauge-bg" cx="50" cy="50" r="40"></circle>
-                        <circle class="gauge-fill com-fill" id="comGauge" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
-                      </svg>
-                      <div class="gauge-label"><span id="comText" class="gauge-value">0</span><span class="gauge-title">SOCIAL</span></div>
-                    </div>
-                  </div>
-                </section>
-
-                <!-- LED Sensors -->
-                <section class="panel led-panel">
-                  <div class="panel-header">[03] NAMESPACE TELEMETRY</div>
-                  <div class="led-grid">
-                    <div class="led-item"><div class="led bulb" id="led-value"></div><span>value</span></div>
-                    <div class="led-item"><div class="led bulb" id="led-valueRecipient"></div><span>valueRecipient</span></div>
-                    <div class="led-item"><div class="led bulb" id="led-valueTimeSplit"></div><span>valueTimeSplit</span></div>
-                    <div class="led-item"><div class="led bulb" id="led-person"></div><span>person</span></div>
-                    <div class="led-item"><div class="led bulb" id="led-transcript"></div><span>transcript</span></div>
-                    <div class="led-item"><div class="led bulb" id="led-chapters"></div><span>chapters</span></div>
-                    <div class="led-item"><div class="led bulb" id="led-locked"></div><span>locked</span></div>
-                    <div class="led-item"><div class="led bulb" id="led-podping"></div><span>podping</span></div>
-                    <div class="led-item"><div class="led bulb" id="led-integrity"></div><span>integrity</span></div>
-                    <div class="led-item"><div class="led bulb" id="led-podroll"></div><span>podroll</span></div>
-                    <div class="led-item"><div class="led bulb" id="led-socialInteract"></div><span>socialInteract</span></div>
-                    <div class="led-item"><div class="led bulb" id="led-funding"></div><span>funding</span></div>
-                  </div>
-                </section>
-
-                <!-- Verification & Token Actions -->
-                <section class="panel auth-panel">
-                  <div class="panel-header">[04] VERIFICATION BRIDGE</div>
-                  <div class="token-summary-inline">
-                    <span>Ledger Creds: <strong id="tokenBalanceInline" class="neon-text">0</strong> SATS</span>
-                    <button id="quickLoginBtn" class="pill-btn">CONNECT PILOT</button>
-                  </div>
-                  <div class="action-buttons-stack">
-                    <button class="btn-ln btn-verify" disabled>DEEP HASH VERIFY (1234 SATS)</button>
-                    <button class="btn-ln boost-btn">BOOST ASSAYER PLATFORM ⚡</button>
-                  </div>
-                  <p class="micro-text">Free scans remaining: <span id="freeScanCount">5</span></p>
-                </section>
-
-              </div>
-            </div>
-
-            <!-- MONITOR 2: ASTROGATION NEIGHBORHOOD (3D CHART) -->
-            <div class="viewport-panel full-bleed" id="monitor-astrogation">
-              <div class="monitor-label">CAM 2: LOCAL NEIGHBORHOOD MAP</div>
-              <div class="astrogation-controls">
-                <span class="dim-text">VECTOR GRID ACTIVATED // CLICK STARS OR PODROLL VECTORS</span>
-                <button id="resetCamBtn" class="pill-btn">CENTER CAMERA</button>
-              </div>
-              <div class="render-container" id="astrogationCanvasContainer">
-                <!-- ThreeJS Injected Here -->
-              </div>
-              <div class="intersection-hud hidden" id="interHud">
-                <div class="hud-header">PLOTTING COURSE: SELECT VECTOR DIRECTION</div>
-                <div class="hud-options" id="interOptions"></div>
-              </div>
-            </div>
-
-            <!-- MONITOR 3: EXTERNAL ARRAY (QUAD-VIEW CAMERAS) -->
-            <div class="viewport-panel full-bleed" id="monitor-quadcam">
-              <div class="quad-grid">
-                <div class="cam-feed">
-                  <div class="feed-tag">CAM A // ISO CHASE</div>
-                  <div class="feed-viewport" id="quadCanvas1"></div>
-                </div>
-                <div class="cam-feed">
-                  <div class="feed-tag">CAM B // TOP DOWN</div>
-                  <div class="feed-viewport" id="quadCanvas2"></div>
-                </div>
-                <div class="cam-feed">
-                  <div class="feed-tag">CAM C // SECTOR ORBIT</div>
-                  <div class="feed-viewport" id="quadCanvas3"></div>
-                </div>
-                <div class="cam-feed">
-                  <div class="feed-tag">CAM D // VECTOR CHART</div>
-                  <div class="feed-viewport" id="quadCanvas4"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- MONITOR 4: GALAXY OVERVIEW (MACRO MAP) -->
-            <div class="viewport-panel full-bleed" id="monitor-galaxy">
-              <div class="monitor-label">CAM 4: METAGALAXY ARCHIVE (HOSTING PROVIDERS)</div>
-              <div class="render-container" id="macroCanvasContainer"></div>
-              <div class="galaxy-legend">
-                <span>STAR SIZE: Episode Archive Length</span>
-                <span>STAR GLOW: Value4Value Heat (Boosts)</span>
-              </div>
-            </div>
-
-            <!-- MONITOR 5: CARGO HOLD (CCTV FEED) -->
-            <div class="viewport-panel full-bleed" id="monitor-cargo">
-              <div class="cctv-panel">
-                <header class="cctv-header">
-                  <span class="cctv-rec blink">● REC</span>
-                  <span>HOLD CAM FEED #02 - ZERO-G STORAGE</span>
-                  <span class="cctv-time" id="cctvTime">--:--:--</span>
-                </header>
-                <div class="cctv-screen" id="cargoContainer">
-                  <!-- Matter.js Injected Here with CSS CRT night-vision filter -->
-                </div>
-                <footer class="cctv-footer">
-                  <span>ACTIVE DROPS: <strong id="liveVolume">0</strong></span>
-                  <span>CURRENT BOUNTY POT: <strong id="cctvJackpot">0</strong> SATS</span>
-                </footer>
-              </div>
-            </div>
-
-            <!-- MONITOR 6: LEDGER PAY (6-OPTION WALL) -->
-            <div class="viewport-panel" id="monitor-ledger">
-              <div class="ledger-screen">
-                <div class="ledger-header-panel">
-                  <h2>PILOT ACCOUNT LEDGER</h2>
-                  <p>Link multiple payment sources to provision platform tokens (1 SAT = 1 Credit).</p>
-                  <div class="master-balance">
-                    <div class="token-display-area">
-                      <img src="./token.png" alt="Podcasting 2.0 Token" class="arcade-token">
-                    </div>
-                    <span>ACTIVE LEDGER BALANCE</span>
-                    <h1 id="tokenBalance">0 <span class="neon-text">SATS</span></h1>
-                    <button id="loginBtn" class="btn-login">LINK WALLET IDENTITY (LNURL)</button>
-                  </div>
-                </div>
-                <div class="payment-wall-grid">
-                  <div class="payment-card option-alby">
-                    <h3>Lightning Extension</h3>
-                    <p class="dim-text">Real-time WebLN keysends.</p>
-                    <button class="pay-btn btn-alby" disabled id="btn-alby">FUND VIA ALBY</button>
-                  </div>
-                  <div class="payment-card option-strike">
-                    <h3>Strike API</h3>
-                    <p class="dim-text">Fast fiat-to-lightning portal.</p>
-                    <button class="pay-btn btn-strike" id="btn-strike">FUND VIA STRIKE</button>
-                  </div>
-                  <div class="payment-card option-paypal">
-                    <h3>PayPal Ledger</h3>
-                    <p class="dim-text">Direct fiat bridge.</p>
-                    <button class="pay-btn btn-paypal" id="btn-paypal">FUND VIA PAYPAL</button>
-                  </div>
-                  <div class="payment-card option-stripe">
-                    <h3>Stripe Portal</h3>
-                    <p class="dim-text">Credit/Debit checkout.</p>
-                    <button class="pay-btn btn-stripe-fiat" id="btn-stripe">FUND VIA STRIPE</button>
-                  </div>
-                  <div class="payment-card option-cashapp">
-                    <h3>CashApp Pay</h3>
-                    <p class="dim-text">Direct mobile tag deposit.</p>
-                    <button class="pay-btn btn-cashapp" id="btn-cashapp">FUND VIA CASHAPP</button>
-                  </div>
-                  <div class="payment-card option-opennode">
-                    <h3>OpenNode API</h3>
-                    <p class="dim-text">Enterprise BTC processor.</p>
-                    <button class="pay-btn btn-opennode" id="btn-opennode">FUND VIA OPENNODE</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- MONITOR 7: SYSTEM LOGS / SETTINGS -->
-            <div class="viewport-panel" id="monitor-settings">
-              <div class="settings-panel">
-                <h2>COCKPIT CONFIGURATION</h2>
-                <div class="settings-grid">
-                  <section class="settings-card">
-                    <h3>Podcasting 2.0 Star Lifecycles</h3>
-                    <ul class="star-tiers-chart">
-                      <li><strong>Nebula:</strong> Incubator feed (&lt; 3 eps).</li>
-                      <li><strong>Protostar:</strong> Fresh launch, slow freq.</li>
-                      <li><strong>Main Sequence:</strong> Active stable star.</li>
-                      <li><strong>Red Giant:</strong> Massive legacy archive.</li>
-                      <li><strong>Supernova:</strong> Viral, hyper-active.</li>
-                      <li><strong>Pulsar:</strong> Rigorous fast-pace.</li>
-                      <li><strong>Black Hole:</strong> Cultural Titan.</li>
-                    </ul>
-                  </section>
-                  <section class="settings-card">
-                    <h3>Interface Calibration</h3>
-                    <button class="pill-btn" id="triggerReportBtn">Construct Fix-It Compliance Report</button>
-                  </section>
-                </div>
-              </div>
-            </div>
-
-          </main>
-
-          <!-- LEAD-GEN MODAL POPUP -->
-          <div class="lead-modal hidden" id="emailModal">
-            <div class="modal-content">
-              <h2>📊 ACTIVATE COMPLIANCE REPORT</h2>
-              <p>Enter your Pilot Email to unlock the step-by-step Podcasting 2.0 "Fix-It" Blueprint containing custom copy-paste XML repairs for your feed!</p>
-              <input type="email" id="leadEmail" placeholder="captain@yourship.com">
-              <div class="modal-actions">
-                <button id="submitEmailBtn" class="pill-btn">GET REPORT</button>
-                <button id="closeModalBtn" class="pill-btn cancel">CANCEL</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- TARGETING DISPLAY & MODAL OVERLAYS (Astrogation v2.1) -->
-          <div id="targetingDisplay">TARGETING: ---</div>
-          
-          <!-- V4V RADIO COCKPIT HUD -->
-          <div id="v4vRadioDeck">
-            <div class="radio-info">
-              <div class="radio-viz"></div>
-              <div>
-                <div id="radioTrack" class="radio-track-text">Initializing V4V Stream...</div>
-                <div id="radioArtist" class="radio-artist-text">Connecting Station</div>
-              </div>
-            </div>
-            <div class="radio-controls">
-              <button class="radio-btn" id="radioPlayBtn">PAUSE</button>
-              <button class="radio-btn" id="radioSkipBtn">SKIP</button>
-              <button class="radio-btn boost" id="radioBoostBtn">⚡ BOOST</button>
-            </div>
-          </div>
-
-          <!-- 3D SCAN PREVIEW MODAL POPUP -->
-          <div id="scanPreviewModal">
-            <div class="preview-header">
-              <h3 id="prevTitle">Warp Scan Target</h3>
-              <button class="preview-close" id="closePrevModal">&times;</button>
-            </div>
-            <div class="preview-body" id="prevBody">
-              Scanning adjacent sector node coordinates...
-            </div>
-            <div class="preview-footer">
-              <button id="engageWarpBtn" class="action-btn">ENGAGE WARP SCAN</button>
-            </div>
-          </div>
-
-        </div> <!-- End Cockpit Screen -->
-        
-        <!-- HARDWARE BOTTOM CONTROLS RAIL -->
-        <div class="cockpit-controls-rail">
-          <div class="rail-label">MONITOR FEED SWAP MATRIX</div>
-          <div class="button-row">
-            <button class="control-key active" data-target="monitor-scanner">
-              <div class="btn-led"></div>
-              <span>01 SCANNER</span>
-            </button>
-            <button class="control-key" data-target="monitor-astrogation">
-              <div class="btn-led"></div>
-              <span>02 NEIGHBOR</span>
-            </button>
-            <button class="control-key" data-target="monitor-quadcam">
-              <div class="btn-led"></div>
-              <span>03 EXTERNAL</span>
-            </button>
-            <button class="control-key" data-target="monitor-galaxy">
-              <div class="btn-led"></div>
-              <span>04 MACRO</span>
-            </button>
-            <button class="control-key" data-target="monitor-cargo">
-              <div class="btn-led"></div>
-              <span>05 CARGO</span>
-            </button>
-            <button class="control-key" data-target="monitor-ledger">
-              <div class="btn-led"></div>
-              <span>06 LEDGER</span>
-            </button>
-            <button class="control-key" data-target="monitor-settings">
-              <div class="btn-led"></div>
-              <span>07 SETTINGS</span>
-            </button>
-          </div>
-        </div>
-
-      </div> <!-- End Cockpit Bezel -->
-    <!-- FUTURISTIC EULA PILOT GATE -->
-    <div id="eulaOverlay" class="eula-backdrop hidden">
-      <div class="eula-box">
-        <div class="eula-header">
-          <h2>ANTIGRAVITY SYSTEMS // PILOT ACCORD</h2>
-          <span class="eula-version">REF: AG-SYS-V2.2</span>
-        </div>
-        <div class="eula-content">
-          <h3>1. PILOT BINDING DECREE</h3>
-          <p>By booting this navigation deck and connecting your sovereign ledger, you ("Pilot") accept absolute liability for interstellar coordinate alignment. Entry into the galactic rift subqueries without verified credits is monitored by deep space protocols.</p>
-          
-          <h3>2. LEDGER COMPLIANCE</h3>
-          <p>Value4Value routing via Alby, Strike, Stripe, CashApp, PayPal, or OpenNode represents direct cryptographic/fiat bridged settlement. Consumed credits (1 SAT = 1 Space Credit) are irreversibly processed via standard 3-way ledger splits (Index, Jackpot, House/Artist).</p>
-          
-          <h3>3. HAZARD INDEMNIFICATION</h3>
-          <p>Space travel, zero-gravity cargo maneuvers, and recursive SQL deep-hashes contain digital hazards. Antigravity Systems is not liable for localized temporal drift or ledger preimage collisions during third-party hosting failures.</p>
-          
-          <p class="glow-text">// ACTIVATING MATRIX REQUIRES EXPLICIT VERIFICATION.</p>
-        </div>
-        <div class="eula-actions">
-          <button id="acceptEulaBtn" class="glow-btn">I AGREE & ENGAGE REACTOR</button>
-        </div>
-      </div>
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar">
+    <div class="logo-container">
+      <div class="logo-text">AEGIS</div>
+      <div style="font-size: 0.6rem; color: var(--text-dim); letter-spacing: 2px;">OP-PODCAST OS v3.0</div>
     </div>
 
-    <!-- UNIFIED CHECKOUT MODAL -->
-    <div id="checkoutModal" class="checkout-overlay hidden">
-      <div class="checkout-box">
-        <div class="checkout-header">
-          <h3 id="checkoutTitle">Initialize Core Portal</h3>
-          <button id="closeCheckoutBtn" class="preview-close">&times;</button>
-        </div>
-        <div class="checkout-body" id="checkoutBody">
-          <!-- Dynamic Checkout UI Injected via JS -->
-        </div>
-        <div class="checkout-footer">
-          <div class="checkout-cost-row">
-            <span>AMOUNT TO DEPOSIT (SATS):</span>
-            <input type="number" id="checkoutSatInput" value="1000" min="100" class="sat-input">
-          </div>
-          <button id="processPaymentBtn" class="glow-btn">AUTHORIZE DEPOSIT</button>
-        </div>
+    <ul class="nav-links">
+      <li class="nav-item active" id="nav-home">
+        <span>●</span> Live Terminal
+      </li>
+      <li class="nav-item" id="btn-sync">
+        <span>🔄</span> Sync Neural Map
+      </li>
+      <li class="nav-item" id="nav-settings">
+        <span>⚙</span> System Config
+      </li>
+    </ul>
+
+    <div class="stats-container">
+      <div class="stat-row">
+        <span class="stat-label">Block Height</span>
+        <span class="stat-value" id="headBlock">106423461</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Sparky Brain</span>
+        <span class="stat-value highlight" id="sparkyCount">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Global Pool</span>
+        <span class="stat-value" id="jackpotPool">0 SATS</span>
       </div>
     </div>
+  </aside>
 
-    </div> <!-- End Bridge Shell -->
+  <!-- MAIN TERMINAL VIEW -->
+  <main class="main-view">
+    <header class="feed-header">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h1 id="viewTitle">Live Terminal</h1>
+          <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Monitoring global podcast ecosystem via Sparky Brain</p>
+        </div>
+        <div class="view-toggles">
+          <button class="nav-item active" id="btn-terminal">Terminal</button>
+          <button class="nav-item" id="btn-graph">Neural Map</button>
+          <button class="nav-item" id="btn-pulse">Pulse Matrix</button>
+        </div>
+      </div>
+    </header>
 
-    <!-- SCRIPTS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
-    <script type="module" src="./main.js"></script>
-    <script type="module" src="./star_chart.js"></script>
-    <script type="module" src="./cargo.js"></script>
-  </body>
+    <!-- VISUALIZATION MODES -->
+    <div id="graphView" class="feed-container hidden" style="height: 600px; background: rgba(0,0,0,0.2); border-radius: 20px;">
+      <canvas id="neuralCanvas"></canvas>
+    </div>
+
+    <div id="pulseView" class="feed-container hidden">
+      <div class="pulse-grid" id="pulseGrid"></div>
+    </div>
+
+    <div class="feed-container" id="liveFeed">
+      <!-- Live Cards Injected Here -->
+    </div>
+
+    <!-- CONFIG VIEW (HIDDEN) -->
+    <div class="feed-container hidden" id="configView">
+      <!-- Config sections moved here -->
+      <section class="config-section">
+        <h2>Module: The Archive</h2>
+        <p style="margin-bottom: 20px; font-size: 0.9rem;">Configure Sparky or Local storage for the 10GB Index.</p>
+        <div class="skyhook-settings">
+          <input type="text" placeholder="Sparky IP (e.g. 192.168.0.176)" id="sparkyIp" value="192.168.0.176">
+          <button class="nav-item" style="width: 100%; border: 1px solid var(--border);">Verify Handshake</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="main.js"></script>
+</body>
 </html>

@@ -1,0 +1,38 @@
+/* --- VISUALIZATION HUD --- */
+.view-toggles {
+  display: flex;
+  gap: 12px;
+}
+
+.pulse-grid {
+  display: grid;
+  grid-template-columns: repeat(20, 1fr);
+  gap: 4px;
+  background: var(--surface);
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.pulse-cell {
+  aspect-ratio: 1;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 2px;
+  transition: background 0.5s;
+}
+
+.pulse-cell.active {
+  background: var(--accent-blue);
+  box-shadow: 0 0 15px var(--accent-blue);
+}
+
+.pulse-cell.v4v {
+  background: var(--accent-purple);
+  box-shadow: 0 0 15px var(--accent-purple);
+}
+
+#neuralCanvas {
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}

@@ -1,7 +1,7 @@
 {
-  "name": "antigravity-podcast-assayer",
-  "version": "1.0.0",
-  "description": "",
+  "name": "aegis-os",
+  "version": "3.0.0",
+  "description": "The Open Podcast Operating System",
   "main": "server.js",
   "engines": {
     "node": "^20.19.0"
@@ -18,13 +18,16 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@hiveio/dhive": "^1.3.6",
+    "axios": "^1.16.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
+    "duckdb": "^1.4.4",
     "express": "^5.2.1",
     "express-basic-auth": "^1.2.1",
     "fast-xml-parser": "^5.8.0",
-    "mqtt": "^5.15.1",
     "node-cron": "^4.2.1",
+    "pg": "^8.20.0",
     "sqlite3": "^6.0.1",
     "ws": "^8.20.1"
   }

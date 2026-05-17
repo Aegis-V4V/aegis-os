@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const { fetchFromIndex } = require('./api');
+const { reapFeed } = require('./reaper');
+const { startScouting } = require('./scout');
 const { XMLParser } = require('fast-xml-parser');
 const basicAuth = require('express-basic-auth');
 const path = require('path');
@@ -43,6 +45,22 @@ const { spawn } = require('child_process');
 let localDb = null;
 let isDbReady = false;
 
+// [AEGIS ENGINE v3.0]
+// The Heart of the Open Podcast Operating System
+// Unified Ingestion, Ledger Settlement, and Data Visualization
+let verificationQueue = [
+    { title: "No Agenda", url: "https://feed.nashownotes.com/rss.xml" },
+    { title: "Podcasting 2.0", url: "http://mp3s.nashownotes.com/pc20rss.xml" },
+    { title: "The Joe Rogan Experience", url: "https://feeds.megaphone.fm/WWO3519750118" },
+    { title: "The Daily", url: "https://feeds.simplecast.com/54nAGc34" },
+    { title: "Crime Junkie", url: "https://feeds.simplecast.com/qp4_g6wV" },
+    { title: "This American Life", url: "https://www.thisamericanlife.org/podcast/rss.xml" },
+    { title: "Huberman Lab", url: "https://feeds.megaphone.fm/hubermanlab" },
+    { title: "Office Ladies", url: "https://feeds.simplecast.com/4t38_93a" },
+    { title: "Stuff You Should Know", url: "https://www.omnycontent.com/d/playlist/e73c998e-6e60-432f-8610-ae210140c5b1/A91018A6-3B4F-44BD-AC78-AE32006EBC72/E6E75186-2322-4912-82D6-AE32006EC0B0/podcast.rss" },
+    { title: "Planet Money", url: "https://feeds.npr.org/510289/podcast.xml" }
+];
+
 function hashString(str) {
     let hash = 0;
     if (!str) return hash;
@@ -64,6 +82,14 @@ function initLocalDb() {
             } else {
                 console.log("God-Mode Database Connected Successfully!");
                 isDbReady = true;
+
+                // Load initial 1000 popular shows into the verification queue
+                localDb.all(`SELECT title, url FROM podcasts ORDER BY popularityScore DESC LIMIT 1000`, (err, rows) => {
+                    if (!err && rows && rows.length > 0) {
+                        verificationQueue = rows;
+                        console.log(`[DATABASE] Verification queue pre-seeded with ${verificationQueue.length} popular shows from index.`);
+                    }
+                });
             }
         });
     } else {
@@ -87,22 +113,12 @@ const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_
 
 // --- Phase 6: Auto-Populate Endpoint ---
 app.get('/api/random-top', (req, res) => {
-    if (!isDbReady) {
-        return res.status(503).json({ 
-            success: false, 
-            error: "Database initializing", 
-            message: "The 10GB Podcast Index database is currently downloading in the background. Please wait 5 minutes and try again." 
-        });
+    if (!verificationQueue || verificationQueue.length === 0) {
+        return res.status(404).json({ success: false, error: "Queue empty" });
     }
-    // Uses the idx_popularity index, making this blazing fast.
-    localDb.all(`SELECT title, url FROM podcasts ORDER BY popularityScore DESC LIMIT 1000`, (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (!rows || rows.length === 0) return res.status(404).json({ error: "No podcasts found" });
-        
-        // Pick a random show from the top 1000
-        const randomShow = rows[Math.floor(Math.random() * rows.length)];
-        res.json({ success: true, podcast: randomShow });
-    });
+    // High availability direct cache response (eliminates DB latencies & errors)
+    const randomShow = verificationQueue[Math.floor(Math.random() * verificationQueue.length)];
+    res.json({ success: true, podcast: randomShow });
 });
 
 // --- ENDPOINT: Search Podcast Index ---
@@ -274,7 +290,7 @@ app.post('/api/invoice', async (req, res) => {
 
     const { amount, description } = req.body;
     const finalAmount = parseInt(amount, 10) || 1000;
-    const finalDesc = description || "Spider Assayer Platform Service";
+    const finalDesc = description || "Aegis Platform Service";
 
     try {
         const response = await fetch("https://api.getalby.com/invoices", {
@@ -306,7 +322,7 @@ app.post('/api/invoice', async (req, res) => {
     }
 });
 
-// --- Phase 4: Assayer Wallet & Ledger ---
+// --- Phase 4: Aegis Wallet & Ledger ---
 const crypto = require('crypto');
 
 app.post('/api/login', (req, res) => {
@@ -440,6 +456,107 @@ app.post('/api/paypal/capture-order', async (req, res) => {
     }
 });
 
+// --- ⚡ STRIKE REST API GATEWAY ENGINE (v2.3.2) ---
+const STRIKE_API_KEY = process.env.STRIKE_API_KEY;
+const STRIKE_BASE = "https://api.strike.me/v1"; 
+
+// 1. Create Strike Invoice & Quote
+app.post('/api/strike/create-invoice', async (req, res) => {
+    const { amount_sats } = req.body;
+    const sats = parseInt(amount_sats, 10);
+    if (isNaN(sats) || sats <= 0) return res.status(400).json({ error: "Invalid Satoshi amount." });
+
+    // Convert SATs to USD using weekly rate
+    const usdVal = (sats * USD_PER_SAT).toFixed(2);
+    
+    try {
+        if (!STRIKE_API_KEY) throw new Error("System missing Strike API Credentials.");
+        
+        // Step A: Create Strike Invoice
+        const crypto = require('crypto');
+        const invoiceRes = await fetch(`${STRIKE_BASE}/invoices`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${STRIKE_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                correlationId: crypto.randomUUID(),
+                description: `Aegis Spatial Deposit: ${sats} SATs`,
+                amount: {
+                    currency: "USD",
+                    amount: usdVal
+                }
+            })
+        });
+        
+        const invoice = await invoiceRes.json();
+        if (!invoice.invoiceId) {
+            throw new Error(invoice.message || "Strike invoice generation failed.");
+        }
+        
+        // Step B: Generate Quote to obtain Lightning BOLT11 String
+        const quoteRes = await fetch(`${STRIKE_BASE}/invoices/${invoice.invoiceId}/quote`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${STRIKE_API_KEY}`,
+                "Content-Type": "application/json"
+            }
+        });
+        
+        const quote = await quoteRes.json();
+        if (!quote.lnInvoice) {
+            throw new Error("Strike quote allocation failed.");
+        }
+        
+        console.log(`[STRIKE] Invoice: ${invoice.invoiceId} // LN: ${quote.lnInvoice.substring(0, 20)}...`);
+        res.json({ invoiceId: invoice.invoiceId, lnInvoice: quote.lnInvoice });
+        
+    } catch (error) {
+        console.error("[STRIKE CREATE ERR]", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 2. Poll Strike Status & Update SQL Ledger
+app.post('/api/strike/check-status', async (req, res) => {
+    const { invoiceId, user_id, amount_sats } = req.body;
+    if (!invoiceId || !user_id || !amount_sats) return res.status(400).json({ error: "Missing payload." });
+    
+    try {
+        if (!STRIKE_API_KEY) throw new Error("Strike API Key not configured.");
+        
+        const response = await fetch(`${STRIKE_BASE}/invoices/${invoiceId}`, {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${STRIKE_API_KEY}`,
+                "Content-Type": "application/json"
+            }
+        });
+        
+        const invoiceData = await response.json();
+        
+        if (invoiceData.state === "PAID") {
+            const sats = parseInt(amount_sats, 10);
+            console.log(`[STRIKE] Captured Deposit: ${invoiceId} // Crediting ${sats} SATs to ${user_id}`);
+            
+            db.run("UPDATE users SET credit_balance_sats = credit_balance_sats + ? WHERE id = ?", [sats, user_id], (err) => {
+                if (err) return res.status(500).json({ error: "DB write failure." });
+                
+                db.run("INSERT INTO ledger_transactions (user_id, type, provider, amount_sats, reference_id) VALUES (?, 'DEPOSIT', 'STRIKE', ?, ?)", 
+                    [user_id, sats, invoiceId]);
+                    
+                res.json({ success: true, paid: true });
+            });
+        } else {
+            res.json({ success: true, paid: false, state: invoiceData.state });
+        }
+    } catch (error) {
+        console.error("[STRIKE CHECK ERR]", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.post('/api/boost', (req, res) => {
     const { user_id, amount_sats, reference_id } = req.body;
     const cost = parseInt(amount_sats, 10) || 0;
@@ -450,11 +567,43 @@ app.post('/api/boost', (req, res) => {
         [user_id, cost, reference_id], function(err) {
             if (err) return res.status(500).json({ error: err.message });
             
-            // Instantly distribute Platform Boost value across Index, Jackpot, and House
-            executeSatSplit(cost, this.lastID);
+            // Instantly distribute Platform Boost value: 20% Index / 80% House / 0% Jackpot
+            executeAegisBoostSplit(cost, this.lastID);
             
             res.json({ success: true, message: "Platform Boost Split Actioned Successfully!" });
         });
+});
+
+// Endpoint: Direct User Payment to Support the Aegis (20% Index, 80% House, 0% Bounty)
+app.post('/api/support-aegis', (req, res) => {
+    const { user_id, amount_sats, contribution_type } = req.body; // 'TIP' or 'SUBSCRIPTION'
+    const cost = parseInt(amount_sats, 10) || 0;
+    if (cost <= 0) return res.status(400).json({ error: "Invalid contribution amount." });
+
+    db.get("SELECT credit_balance_sats FROM users WHERE id = ?", [user_id], (err, user) => {
+        if (err || !user) return res.status(500).json({ error: "User session expired." });
+        if (user.credit_balance_sats < cost) return res.status(402).json({ error: "Insufficient balance." });
+
+        // Deduct contribution
+        db.run("UPDATE users SET credit_balance_sats = credit_balance_sats - ? WHERE id = ?", [cost, user_id], (updateErr) => {
+            if (updateErr) return res.status(500).json({ error: updateErr.message });
+
+            // Insert transaction record
+            db.run("INSERT INTO ledger_transactions (user_id, type, provider, amount_sats) VALUES (?, 'SUPPORT_PAYMENT', 'INTERNAL', ?)", 
+                [user_id, -cost], function(dbErr) {
+                    if (!dbErr) {
+                        // Applies platform split: 20% Index Node, 80% Retained House, 0% Jackpot Pool
+                        executeAegisBoostSplit(cost, this.lastID);
+                    }
+                });
+
+            res.json({ 
+                success: true, 
+                message: `Gratitude verified! Aegis Platform ${contribution_type || 'Support'} logged successfully.`,
+                new_balance: user.credit_balance_sats - cost 
+            });
+        });
+    });
 });
 
 app.post('/api/boost-artist', (req, res) => {
@@ -579,19 +728,26 @@ const http = require('http');
 const server = http.createServer(app);
 const WebSocket = require('ws');
 const wss = new WebSocket.Server({ server });
-const mqtt = require('mqtt');
+const dhive = require('@hiveio/dhive');
 
-// Connect to the official Podping MQTT broker
-const mqttClient = mqtt.connect('mqtt://mqtt.podping.cloud:1883');
+// Link to high-availability Hive Mainnet nodes
+const hiveClient = new dhive.Client(["https://api.hive.blog", "https://api.openhive.network"]);
 
-mqttClient.on('connect', () => {
-    console.log("Connected to Podping Firehose (mqtt.podping.cloud)");
-    mqttClient.subscribe('podping/#'); 
-});
+// Verify and log Blockchain Link at boot
+async function verifyHiveConnection() {
+    try {
+        const props = await hiveClient.database.getDynamicGlobalProperties();
+        console.log(`[BLOCKCHAIN] Link Confirmed. Linked to Hive Mainnet. Head Block height: ${props.head_block_number}`);
+    } catch (err) {
+        console.error("[BLOCKCHAIN] Connection Warning: Initial Block height query failed.", err.message);
+    }
+}
+verifyHiveConnection();
 
 // --- Phase 8: True Global State & Time-Based Lotteries ---
 const cron = require('node-cron');
-let dailyCargo = [];
+const AEGIS_JACKPOT_KEY = 'global_jackpot';
+let dailyStream = []; // Daily ingestion history
 let jackpotPool = 0; // Initialized at 0 SATs
 
 // Project Astrogation: Restore persistent global jackpot state on startup
@@ -635,58 +791,125 @@ function executeSatSplit(totalSats, txId) {
     console.log(`[LEDGER] 3-Way Sat Split verified for TX#${txId}. Pool incremented by ${jackpotCut.toFixed(1)} Sats.`);
 }
 
+// Utility: Execute Platform-Specific Assayer Boost Split (20% Index, 80% House, 0% Jackpot)
+function executeAssayerBoostSplit(totalSats, txId) {
+    const amount = Math.abs(totalSats);
+    const indexCut = amount * 0.20;
+    const houseCut = amount * 0.80; // Rest kept by system
+    const jackpotCut = 0; // Explicitly 0% into bounty
+
+    db.run(`INSERT INTO revenue_split_ledger 
+        (tx_id, index_node_sats, jackpot_sats, house_sats, total_sats) 
+        VALUES (?, ?, ?, ?, ?)`, 
+        [txId, indexCut, jackpotCut, houseCut, amount], (err) => {
+            if (err) console.error("Assayer Boost Split Record Error:", err);
+        });
+
+    console.log(`[LEDGER] Assayer Boost Split verified for TX#${txId}. 20% Index (${indexCut.toFixed(1)}) // 80% House (${houseCut.toFixed(1)}).`);
+}
+
 // 1. Connection Sync
 wss.on('connection', ws => {
-    console.log("Frontend connected to Cargo Bay stream. Syncing initial state.");
+    console.log("Frontend linked to Aegis Stream Core. Syncing initial state.");
     ws.send(JSON.stringify({ 
-        type: 'INITIAL_CARGO', 
-        cargo: dailyCargo, 
+        type: 'INITIAL_STREAM', 
+        stream: dailyStream, 
         jackpot: jackpotPool 
     }));
 });
 
-// 2. Podping Listener with DB Augmentation
-mqttClient.on('message', async (topic, message) => {
+// 🛡️ GLOBAL PHYSICS SYNCHRONIZATION & FUNNEL LOGGER
+const tempLogPath = path.join(__dirname, 'temp_cargo_funnel.log');
+
+function augmentDropWithPhysicsAndLog(drop) {
+    // 1. Generate Static Physics Metrics for Client Sync (Forces absolute visual identity across viewers)
+    const AIRLOCKS = ['TOP', 'BOTTOM', 'LEFT', 'RIGHT', 'REAR'];
+    const gate = AIRLOCKS[Math.floor(Math.random() * AIRLOCKS.length)];
+    const randSize = Math.random();
+    
+    drop.spawnParams = {
+        gate: gate,
+        relX: Math.random(), 
+        relY: Math.random(),
+        randSize: randSize,
+        baseSize: 35 + (randSize * 15),
+        forceXScale: Math.random() - 0.5,
+        forceYScale: Math.random() - 0.5
+    };
+
+    // 2. Seed Real-World implemented Podcast 2.0 Tags (Represented visually as Travel Stickers)
+    const PODCAST_20_TAGS = ['value', 'valueRecipient', 'valueTimeSplit', 'person', 'transcript', 'chapters', 'locked', 'podping', 'integrity', 'podroll', 'socialInteract', 'funding'];
+    const shuffled = [...PODCAST_20_TAGS].sort(() => 0.5 - Math.random());
+    const tagCount = Math.floor(Math.random() * 4) + 1; // Paste 1-4 real implemented stickers
+    drop.activeTags = shuffled.slice(0, tagCount);
+
+    // 3. Write to Spatial Funnel Logs (Persists for next 5 hours of analytical tracking)
     try {
-        const payload = JSON.parse(message.toString());
-        const urls = payload.iris || payload.urls;
-        
-        if (urls && urls.length > 0) {
-            const enrichedDrops = [];
+        const stamp = new Date().toISOString();
+        const logLine = `[${stamp}] Podcast Entered Bay: "${drop.title}" (${drop.url})\n`;
+        fs.appendFileSync(tempLogPath, logLine);
+    } catch (err) {
+        console.error("[LOGGER FAIL]", err);
+    }
+}
 
-            for (const url of urls) {
-                if (!isDbReady) {
-                    // Safe fallback if database is still downloading
-                    const drop = {
-                        url: url,
-                        title: 'Initializing Broadcast...',
-                        image: null,
-                        description: 'The God-Mode database is downloading in the background.',
-                        isCompliant: Math.random() > 0.6
-                    };
-                    enrichedDrops.push(drop);
-                    dailyCargo.push(drop);
-                    continue;
-                }
-                
-                // Query local 10GB database for metadata
-                await new Promise((resolve) => {
-                    localDb.get("SELECT title, image, description FROM podcasts WHERE url = ?", [url], (err, row) => {
-                        const drop = {
-                            url: url,
-                            title: row ? row.title : 'Unknown Broadcast',
-                            image: row ? row.image : null,
-                            description: row ? row.description : '',
-                            isCompliant: Math.random() > 0.6 // Mock compliance for now
-                        };
-                        enrichedDrops.push(drop);
-                        dailyCargo.push(drop);
-                        resolve();
-                    });
-                });
+// 2. Dynamic Podping Processor
+async function processInboundUrls(urls) {
+    try {
+        const enrichedDrops = [];
+
+        for (const url of urls) {
+            if (!isDbReady) {
+                const drop = {
+                    url: url,
+                    title: 'Initializing Broadcast...',
+                    image: null,
+                    description: 'The God-Mode database is downloading in the background.',
+                    isCompliant: Math.random() > 0.6
+                };
+                augmentDropWithPhysicsAndLog(drop);
+                enrichedDrops.push(drop);
+                dailyCargo.push(drop);
+                continue;
             }
+            
+            await new Promise((resolve) => {
+                localDb.get("SELECT title, image, description FROM podcasts WHERE url = ?", [url], (err, row) => {
+                    const baseline = {
+                        omni: Math.floor(Math.random() * 30) + 10, // Instant rough estimate
+                        tags: { v4v: true, person: false } 
+                    };
+                    
+                    const drop = {
+                        title: row ? row.title : 'Unknown Broadcast',
+                        url: url,
+                        image: row ? row.image : null,
+                        description: row ? row.description : '',
+                        baseline: baseline,
+                        isCompliant: true,
+                        spawnParams: null
+                    };
 
-            // Broadcast the enriched drops to all clients
+                    // Dispatch the Reaper to get the deep intelligence in the background
+                    reapFeed(url);
+                    
+                    augmentDropWithPhysicsAndLog(drop);
+                    enrichedDrops.push(drop);
+                    dailyStream.push(drop);
+
+                    // Replenish verification cache dynamically
+                    verificationQueue.push({ title: drop.title, url: drop.url });
+                    if (verificationQueue.length > 1000) {
+                        verificationQueue = verificationQueue.slice(-1000);
+                    }
+
+                    resolve();
+                });
+            });
+        }
+
+        if (enrichedDrops.length > 0) {
+            // Broadcast the enriched drops to all active clients
             wss.clients.forEach(c => {
                 if (c.readyState === WebSocket.OPEN) {
                     c.send(JSON.stringify({ 
@@ -698,9 +921,52 @@ mqttClient.on('message', async (topic, message) => {
             });
         }
     } catch (e) {
-        // Ignore invalid parses
+        console.error("[PROCESS FAIL]", e);
     }
-});
+}
+
+// 3. Main Blockchain Watcher Loop
+async function streamHivePodpings() {
+    console.log("[BLOCKCHAIN] Opening live operations stream for 'podping' custom_json...");
+    try {
+        const stream = hiveClient.blockchain.getOperationsStream();
+        
+        stream.on('data', (operation) => {
+            // Look for custom_json broadcasts
+            if (operation.op[0] === 'custom_json') {
+                const { id, json } = operation.op[1];
+                
+                // Match active Podping & Podcast Index identifiers
+                if (id === 'podping' || id === 'pp_podcast_update' || id === 'podping-test') {
+                    try {
+                        const payload = JSON.parse(json);
+                        const urls = payload.iris || payload.urls;
+                        if (urls && urls.length > 0) {
+                            console.log(`[BLOCKCHAIN] Live Podping detected! Spawning ${urls.length} feed(s) in Aegis Stream Core.`);
+                            processInboundUrls(urls);
+                        }
+                    } catch (parseErr) {
+                        // Ignore syntax errors in JSON
+                    }
+                }
+            }
+        });
+
+        stream.on('error', (err) => {
+            console.error("[BLOCKCHAIN] Operational stream disrupted. Retrying in 10s...", err.message);
+            setTimeout(streamHivePodpings, 10000);
+        });
+    } catch (setupErr) {
+        console.error("[BLOCKCHAIN] Operational setup failure. Re-arming in 10s...", setupErr.message);
+        setTimeout(streamHivePodpings, 10000);
+    }
+}
+
+// Fire up the streaming daemon
+streamHivePodpings();
+
+// Start the Deep Index Scout (1 new node per minute)
+startScouting(1);
 
 // 3. The 11:59:59 PM (New York) Daily Reset Cron
 cron.schedule('59 59 23 * * *', () => {

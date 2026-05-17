@@ -3,7 +3,7 @@
 
 const axios = require('axios');
 
-const SPARKY_IP = '192.168.0.176';
+const SPARKY_IP = '67.205.162.200'; // chantecler-01
 const SPARKY_PORT = 3000;
 
 /**

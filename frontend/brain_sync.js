@@ -7,7 +7,7 @@ import { addNodeToMap } from './visualizer.js';
 export async function syncHistoricalIntelligence() {
   console.log("[SPARKY] Syncing historical intelligence for Neural Map...");
   try {
-    const response = await fetch('http://192.168.0.176:3000/api/intelligence');
+    const response = await fetch('http://67.205.162.200:3000/api/intelligence');
     const data = await response.json();
     
     data.forEach(node => {

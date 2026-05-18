@@ -1,3 +1,17 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: inbox
+tags:
+  - idea
+  - pod
+title: recommendations
+type: idea
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 # The "podcast:recommendations" Specification
 
 <small>Version 1.0 by Benjamin Bellamy - 2021.08.31</small>

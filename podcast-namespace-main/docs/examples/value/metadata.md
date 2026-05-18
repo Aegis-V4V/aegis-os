@@ -1,3 +1,17 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: inbox
+tags:
+  - idea
+  - pod
+title: metadata
+type: idea
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 ## RSS Payment Metadata
 
 Originally the `<podcast:value>` spec used keysend to facilitate payments. However there is now consensus within the Podcasting 2.0 community that keysend is not a long-term solution because many of the most popular Lightning Wallets such as Strike, CashApp, Primal, Wallet of Satoshi do not support it.

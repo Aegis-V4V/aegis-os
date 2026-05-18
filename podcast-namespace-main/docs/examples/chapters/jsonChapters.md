@@ -1,3 +1,17 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: inbox
+tags:
+  - idea
+  - pod
+title: jsonChapters
+type: idea
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 ## JSON Chapters Format
 
 <small>Version 1.2 - Updated on 2021.04.15</small>

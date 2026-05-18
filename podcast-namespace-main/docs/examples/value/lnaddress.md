@@ -1,3 +1,16 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: archived
+tags:
+  - pod
+title: lnaddress
+type: reference
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 # The 'lnaddress' Recipient Type
 
 The `lnaddress` recipient type refers to a "[Lightning Address](https://github.com/andrerfneves/lightning-address/blob/master/DIY.md)", which is an email-like address used to resolve a recipient's `lnurlp` and `keysend` details from "well-known" URIs.

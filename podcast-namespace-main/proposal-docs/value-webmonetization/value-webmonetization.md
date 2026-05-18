@@ -1,3 +1,16 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: archived
+tags:
+  - pod
+title: "value-webmonetization"
+type: reference
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 # Web Monetization using `<podcast:value/>`
 
 To enable and promote Web Monetization (WM) in podcasting, necessary information for WM could be provided for a podcast by adding a `<podcast:value/>` tag to the RSS feed.

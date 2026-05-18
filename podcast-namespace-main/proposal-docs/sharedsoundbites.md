@@ -1,3 +1,16 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: archived
+tags:
+  - pod
+title: sharedsoundbites
+type: reference
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 # The Shared SoundBites Specification
 
 <small>Version 0.01 by John Chidgey - 2022.05.18</small>

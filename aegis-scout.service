@@ -3,7 +3,7 @@ Description=Aegis OS Scout Daemon
 After=network.target
 
 [Service]
-ExecStart=/home/aewoodyard/aegis-os/venv/bin/python /home/aewoodyard/aegis-os/scout.py
+ExecStart=/home/aewoodyard/aegis-os/venv/bin/python -u /home/aewoodyard/aegis-os/scout.py
 WorkingDirectory=/home/aewoodyard/aegis-os
 StandardOutput=inherit
 StandardError=inherit

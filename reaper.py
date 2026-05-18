@@ -59,6 +59,8 @@ def reap_feed(url):
 
 def save_intelligence(url, title, score, weirdness, connections):
     conn = sqlite3.connect(DB_PATH)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout=5000;")
     c = conn.cursor()
     import uuid
     uid = str(uuid.uuid4())

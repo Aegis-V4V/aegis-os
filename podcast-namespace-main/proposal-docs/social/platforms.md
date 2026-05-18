@@ -1,3 +1,16 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: archived
+tags:
+  - pod
+title: platforms
+type: reference
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 ### Social Platform / Protocol
 
 Note: Draft - trying to figure out if the platform/protocol list should be a separate file.

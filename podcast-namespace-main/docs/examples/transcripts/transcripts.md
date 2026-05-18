@@ -1,3 +1,17 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: inbox
+tags:
+  - idea
+  - pod
+title: transcripts
+type: idea
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 # Transcript File Format Details
 
 This is the initial spec for the podcast transcript format. There are four possible formats detailed below.

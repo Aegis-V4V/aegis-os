@@ -1,3 +1,17 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: inbox
+tags:
+  - idea
+  - pod
+title: publishers
+type: idea
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 # The Publisher Medium
 
 v1.0 - April 5, 2024

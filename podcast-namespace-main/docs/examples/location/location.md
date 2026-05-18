@@ -1,3 +1,17 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: inbox
+tags:
+  - idea
+  - pod
+title: location
+type: idea
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 ## Location tag format details and implementation guide
 
 _Revised in 2025_

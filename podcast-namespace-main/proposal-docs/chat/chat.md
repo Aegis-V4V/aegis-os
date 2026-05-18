@@ -1,3 +1,16 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: archived
+tags:
+  - pod
+title: chat
+type: reference
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 # The "podcast:chat" Specification
 
 <small>Version 1.0 by Dave Jones - 2022.04.10</small>

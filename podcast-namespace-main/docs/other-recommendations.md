@@ -1,3 +1,16 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: archived
+tags:
+  - pod
+title: "other-recommendations"
+type: reference
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 # Other Recommendations from the Creators of the RSS Namespace Extension for Podcasting
 
 While the wholistic RSS namespace for podcasting is meant to synthesize the fragmented world of podcast namespaces, there are some existing standards and defacto-standards we want do endorse:

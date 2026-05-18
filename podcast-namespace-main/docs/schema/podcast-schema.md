@@ -1,3 +1,17 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: inbox
+tags:
+  - idea
+  - pod
+title: "podcast-schema"
+type: idea
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 # XML Schema Formal Definition of Podcast Index Namespace
 
 A schema in XML is a definition of the elements and attributes in a particular realm known as a namespace. The namespace for the Podcast Index extension is `https://podcastindex.org/namespace/1.0`.

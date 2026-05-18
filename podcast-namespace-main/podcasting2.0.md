@@ -1,3 +1,17 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: inbox
+tags:
+  - idea
+  - pod
+title: podcasting2.0
+type: idea
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 # Podcasting 2.0
 
 Podcasting 2.0 is a set of forward looking ideas combined with the technology to realize them. It's a vision for what the podcast listener experience can and should

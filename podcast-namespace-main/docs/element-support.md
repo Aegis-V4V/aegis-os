@@ -1,3 +1,16 @@
+---
+category: pod
+plane_id: 
+profit_likelihood: high
+project: Podcasting 2.0
+status: archived
+tags:
+  - pod
+title: "element-support"
+type: reference
+updated_at: "2026-05-17T09:08:48Z"
+---
+
 # Application Support by Element
 
 For elements that are included in the official [DTD](https://github.com/Podcastindex-org/podcast-namespace/blob/main/docs/1.0.md), we will highlight applications offering production support. Links should point to a public announcement or production example.

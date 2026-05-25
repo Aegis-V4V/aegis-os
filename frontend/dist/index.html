@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEGIS OS | Intelligence Node</title>
+  <script type="module" crossorigin src="/assets/main-BY9ng4Aj.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/main-u4lkJKFJ.css">
+</head>
+<body>
+
+  <!-- SIDEBAR NAVIGATION -->
+  <aside class="sidebar">
+    <div class="logo-container">
+      <div class="logo-text">AEGIS</div>
+      <div style="font-size: 0.6rem; color: var(--text-dim); letter-spacing: 2px;">OP-PODCAST OS v3.0</div>
+    </div>
+
+    <ul class="nav-links">
+      <li class="nav-item active" id="nav-home">
+        <span>●</span> Live Terminal
+      </li>
+      <li class="nav-item" id="btn-sync">
+        <span>🔄</span> Sync Neural Map
+      </li>
+      <li class="nav-item" id="nav-settings">
+        <span>⚙</span> System Config
+      </li>
+    </ul>
+
+    <div class="stats-container">
+      <div class="stat-row">
+        <span class="stat-label">Block Height</span>
+        <span class="stat-value" id="headBlock">106423461</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Sparky Brain</span>
+        <span class="stat-value highlight" id="sparkyCount">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Global Pool</span>
+        <span class="stat-value" id="jackpotPool">0 SATS</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN TERMINAL VIEW -->
+  <main class="main-view">
+    <header class="feed-header">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h1 id="viewTitle">Live Terminal</h1>
+          <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Monitoring global podcast ecosystem via Sparky Brain</p>
+        </div>
+        <div class="view-toggles">
+          <button class="nav-item active" id="btn-terminal">Terminal</button>
+          <button class="nav-item" id="btn-graph">Neural Map</button>
+          <button class="nav-item" id="btn-pulse">Pulse Matrix</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- VISUALIZATION MODES -->
+    <div id="graphView" class="feed-container hidden" style="height: 600px; background: rgba(0,0,0,0.2); border-radius: 20px;">
+      <canvas id="neuralCanvas"></canvas>
+    </div>
+
+    <div id="pulseView" class="feed-container hidden">
+      <div class="pulse-grid" id="pulseGrid"></div>
+    </div>
+
+    <div class="feed-container" id="liveFeed">
+      <!-- Live Cards Injected Here -->
+    </div>
+
+    <!-- CONFIG VIEW (HIDDEN) -->
+    <div class="feed-container hidden" id="configView">
+      <!-- Config sections moved here -->
+      <section class="config-section">
+        <h2>Module: The Archive</h2>
+        <p style="margin-bottom: 20px; font-size: 0.9rem;">Configure Sparky or Local storage for the 10GB Index.</p>
+        <div class="skyhook-settings">
+          <input type="text" placeholder="Chantecler-01 IP (e.g. 67.205.162.200)" id="sparkyIp" value="67.205.162.200">
+          <button class="nav-item" style="width: 100%; border: 1px solid var(--border);">Verify Handshake</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+</body>
+</html>

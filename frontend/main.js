@@ -1,7 +1,9 @@
 // Aegis OS | Main Terminal Controller
-import { updateStats, addDropToFeed } from './dashboard.js';
+import { updateStats, addDropToFeed, setActiveChannel } from './dashboard.js';
 import { initVisualizers } from './visualizer.js';
 import { initNostr, addNostrItem } from './nostr.js';
+
+const BRAIN_API = 'http://67.205.162.200:3000';
 
 // --- STATE MANAGEMENT ---
 let headBlockHeight = 0;
@@ -81,9 +83,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   const scoutToggle = document.getElementById('toggleScout');
-  scoutToggle.addEventListener('change', () => {
-    console.log(`[SYSTEM] Scout Bot status changed: ${scoutToggle.checked}`);
-    // Future: API call to toggle background process
+
+  // Sync initial scout state from brain API
+  fetch(`${BRAIN_API}/api/scout/status`)
+    .then(r => r.json())
+    .then(data => { scoutToggle.checked = data.active; })
+    .catch(() => console.warn('[SYSTEM] Brain API unreachable — scout toggle state unknown.'));
+
+  scoutToggle.addEventListener('change', async () => {
+    scoutToggle.disabled = true;
+    try {
+      const res = await fetch(`${BRAIN_API}/api/scout/toggle`, { method: 'POST' });
+      const data = await res.json();
+      scoutToggle.checked = data.active;
+      console.log(`[SYSTEM] Scout Bot ${data.active ? 'started' : 'stopped'} via Brain API.`);
+    } catch (err) {
+      console.error('[SYSTEM] Scout toggle failed:', err);
+      scoutToggle.checked = !scoutToggle.checked; // revert on failure
+    } finally {
+      scoutToggle.disabled = false;
+    }
   });
 
   // 1. EULA Flow
@@ -100,12 +119,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   initNostr();
   initWebSocket();
 
-  // 3. Listen for Tuning Changes
+  // 3. Listen for Tuning Changes — filter live feed by channel
   window.addEventListener('channelChange', (e) => {
     if (e.detail.name !== currentChannel) {
       currentChannel = e.detail.name;
       console.log(`[TUNER] Synchronized to: ${currentChannel}`);
-      // In the future, this would filter the live feed or change layouts
+      setActiveChannel(currentChannel);
     }
   });
 });

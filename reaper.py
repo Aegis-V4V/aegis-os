@@ -50,6 +50,22 @@ def reap_feed(url):
                 "type": "PERSON"
             })
 
+        # Parse podcast:podroll — the Podcasting 2.0 recommendation web
+        podroll_items = root.findall('.//podcast:podroll/podcast:remoteItem', namespaces)
+        for item in podroll_items:
+            feed_guid = item.attrib.get('feedGuid', '')
+            feed_url = item.attrib.get('feedUrl', '')
+            medium = item.attrib.get('medium', 'podcast')
+            if feed_guid or feed_url:
+                connections.append({
+                    "type": "PODROLL",
+                    "feedGuid": feed_guid,
+                    "feedUrl": feed_url,
+                    "medium": medium
+                })
+        if podroll_items:
+            score += 10  # Podcasting 2.0 community engagement bonus
+
         weirdness = len(connections) * 2 # Simple heuristic
         
         save_intelligence(url, title, score, weirdness, connections)

@@ -8,6 +8,17 @@ const jackpotPoolText = document.getElementById('jackpotPool');
 
 const FEED_CAP = 100;
 let feedItems = [];
+let activeChannel = 'AEGIS PRIME';
+
+export function setActiveChannel(channelName) {
+  activeChannel = channelName;
+  // Filter existing cards: show all on AEGIS PRIME, V4V-only on any other channel
+  const showAll = channelName === 'AEGIS PRIME' || channelName === 'ALL';
+  document.querySelectorAll('.podcast-card').forEach(card => {
+    const isV4V = card.dataset.v4v === 'true';
+    card.style.display = (showAll || isV4V) ? '' : 'none';
+  });
+}
 
 import { triggerPulse, addNodeToMap } from './visualizer.js';
 
@@ -35,9 +46,14 @@ export function addDropToFeed(drop) {
     auditLog.removeChild(auditLog.lastChild);
   }
 
+  // Skip card if current channel filter excludes non-V4V
+  const showAll = activeChannel === 'AEGIS PRIME' || activeChannel === 'ALL';
+  if (!showAll && !drop.isCompliant) return;
+
   // 2. Create Feed Card
   const card = document.createElement('div');
   card.className = 'podcast-card';
+  card.dataset.v4v = drop.isCompliant ? 'true' : 'false';
   
   // Logic for compliance tags
   const isCompliant = drop.isCompliant || false;

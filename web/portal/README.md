@@ -7,8 +7,9 @@ updated_at: "2026-05-23"
 type: site-readme
 ---
 
-> [!IMPORTANT]
-> **FOR AI AGENTS:** Read `ops/site-info.md` before modifying anything in this repo.
+> **Staged Shell** ? Domain: `podassay.space` ? STAX Lifecycle: `Active ? Planning` ? [Governance](.orchestration/agent-instructions.md)
+>
+> This repository is an intentional staged shell awaiting content and deployment decisions.
 
 # Pod Assay
 

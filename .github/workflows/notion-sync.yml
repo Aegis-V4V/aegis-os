@@ -32,7 +32,7 @@ jobs:
 
           # Slug aliases — keep in sync with ops/github_sync.py
           ALIASES = {
-              "antigravity-assayer": "aegis",
+              "antigravity-aegis-os": "aegis",
           }
           slug = ALIASES.get(slug, slug)
 

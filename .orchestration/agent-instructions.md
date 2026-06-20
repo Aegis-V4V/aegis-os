@@ -1,5 +1,5 @@
 ---
-repo_name: Antigravity_Assayer
+repo_name: aegis-os
 repo_alias: aegis-os
 repo_type: Podcast Infrastructure / Compliance Engine
 security_tier: 2
@@ -8,7 +8,7 @@ cluster: V4V
 updated: "2026-06-20"
 ---
 
-# Agent Instructions — Antigravity_Assayer (aegis-os)
+# Agent Instructions — aegis-os (aegis-os)
 
 ## Security Tier: Strong (2)
 Standard agent autonomy. All work via PR — never push directly to main. No secrets in code or commit messages.
@@ -17,16 +17,16 @@ Standard agent autonomy. All work via PR — never push directly to main. No sec
 Aegis OS is a headless podcast intelligence harvester, compliance evaluator, and Value4Value (V4V) verification engine. It:
 - Indexes Podcasting 2.0 RSS feeds and evaluates compliance with the podcast namespace and V4V standards
 - Runs dual background daemons on **chantecler-01** (DigitalOcean, `67.205.162.200`): `aegis-scout` (harvesting) and `aegis-brain-api` (Flask API on port 3000)
-- Feeds the local **Antigravity Podcast Assayer** dashboard (front-end visualizer)
+- Feeds the local **Antigravity aegis-os** dashboard (front-end visualizer)
 - Provides leaderboards, neural guest connections, and V4V statistics
 
-The name "Assayer" refers to compliance assaying (evaluating RSS feeds against Podcasting 2.0 standards). The project is being renamed to **aegis-os** to reflect its expanded scope beyond evaluation.
+The name "aegis-os" refers to compliance assaying (evaluating RSS feeds against Podcasting 2.0 standards). The project is being renamed to **aegis-os** to reflect its expanded scope beyond evaluation.
 
 ## Cluster
 V4V
 
 ## Related repos
-- `ss-podassay-space` — domain/site shell for podassay.space (this project's public face)
+- `ss-aegis-os-space` — domain/site shell for aegis-os.space (this project's public face)
 
 ## Deployment
 - **Remote brain**: chantecler-01 (`67.205.162.200`) — systemd services `aegis-brain-api` and `aegis-scout`
@@ -38,8 +38,8 @@ V4V
 - PostgreSQL + DuckDB + SQLite (on chantecler-01)
 
 ## Downstream consumers
-- Antigravity Podcast Assayer dashboard (local)
-- podassay.space (public site shell)
+- Antigravity aegis-os dashboard (local)
+- aegis-os.space (public site shell)
 
 ## Active horizon
 ```yaml

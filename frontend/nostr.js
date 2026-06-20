@@ -1,4 +1,4 @@
-// Assayer.io | Nostr Integration Module
+// aegis-os.io | Nostr Integration Module
 // Handles NIP-07 extension and Relay connections
 
 const nostrFeed = document.getElementById('nostrFeed');

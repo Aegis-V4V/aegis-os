@@ -31,7 +31,7 @@ Aegis OS is a high-performance headless podcast intelligence harvester, scout, a
 ## 🛠️ System Overview
 
 Aegis OS is split into two components:
-1. **The local dashboard (`Antigravity Podcast Assayer`)**: Front-end visualizer which displays neural guest connections, Value4Value statistics, and system telemetry.
+1. **The local dashboard (`Antigravity aegis-os`)**: Front-end visualizer which displays neural guest connections, Value4Value statistics, and system telemetry.
 2. **The remote brain (`chantecler-01`)**: Running dual background systemd daemons:
    * **`aegis-scout`**: The harvesting engine (`scout.py` and `reaper.py`) that queries RSS streams.
    * **`aegis-brain-api`**: A lightweight Python Flask micro-server (`brain_api.py`) exposing processed data on port `3000` to the local dashboard.

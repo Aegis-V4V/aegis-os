@@ -146,7 +146,7 @@ app.get('/api/scan', async (req, res) => {
         // Inject browser-grade headers to bypass Cloudflare/hosting blocks and increase timeout
         const response = await fetch(url, { 
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 (Compatible; Podcasting2.0-Spider-Assayer/1.0)',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 (Compatible; Podcasting2.0-Spider-aegis-os/1.0)',
                 'Accept': 'text/xml, application/rss+xml, application/xml, */*',
                 'Accept-Encoding': 'gzip, deflate, br'
             },
@@ -791,8 +791,8 @@ function executeSatSplit(totalSats, txId) {
     console.log(`[LEDGER] 3-Way Sat Split verified for TX#${txId}. Pool incremented by ${jackpotCut.toFixed(1)} Sats.`);
 }
 
-// Utility: Execute Platform-Specific Assayer Boost Split (20% Index, 80% House, 0% Jackpot)
-function executeAssayerBoostSplit(totalSats, txId) {
+// Utility: Execute Platform-Specific aegis-os Boost Split (20% Index, 80% House, 0% Jackpot)
+function executeaegis-osBoostSplit(totalSats, txId) {
     const amount = Math.abs(totalSats);
     const indexCut = amount * 0.20;
     const houseCut = amount * 0.80; // Rest kept by system
@@ -802,10 +802,10 @@ function executeAssayerBoostSplit(totalSats, txId) {
         (tx_id, index_node_sats, jackpot_sats, house_sats, total_sats) 
         VALUES (?, ?, ?, ?, ?)`, 
         [txId, indexCut, jackpotCut, houseCut, amount], (err) => {
-            if (err) console.error("Assayer Boost Split Record Error:", err);
+            if (err) console.error("aegis-os Boost Split Record Error:", err);
         });
 
-    console.log(`[LEDGER] Assayer Boost Split verified for TX#${txId}. 20% Index (${indexCut.toFixed(1)}) // 80% House (${houseCut.toFixed(1)}).`);
+    console.log(`[LEDGER] aegis-os Boost Split verified for TX#${txId}. 20% Index (${indexCut.toFixed(1)}) // 80% House (${houseCut.toFixed(1)}).`);
 }
 
 // 1. Connection Sync

@@ -1,0 +1,11 @@
+repo_name: Antigravity_Assayer
+repo_type: Podcast Infrastructure / Compliance Engine
+lifecycle_state: Active
+active_sub_state: Building
+security_tier: Strong
+model: claude-sonnet-4-6
+max_tokens: 8000
+daily_budget_usd: 2.00
+spend_tier_order:
+  - web_subscription
+  - console_api

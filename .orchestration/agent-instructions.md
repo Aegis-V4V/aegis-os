@@ -4,7 +4,7 @@ repo_alias: aegis-os
 repo_type: Podcast Infrastructure / Compliance Engine
 security_tier: 2
 lifecycle: Active
-cluster: Podcast
+cluster: V4V
 updated: "2026-06-20"
 ---
 
@@ -23,7 +23,7 @@ Aegis OS is a headless podcast intelligence harvester, compliance evaluator, and
 The name "Assayer" refers to compliance assaying (evaluating RSS feeds against Podcasting 2.0 standards). The project is being renamed to **aegis-os** to reflect its expanded scope beyond evaluation.
 
 ## Cluster
-Podcast
+V4V
 
 ## Related repos
 - `ss-podassay-space` — domain/site shell for podassay.space (this project's public face)

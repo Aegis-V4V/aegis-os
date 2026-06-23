@@ -5,8 +5,15 @@ repo_type: Podcast Infrastructure / Compliance Engine
 security_tier: 2
 lifecycle: Active
 cluster: V4V
-updated: "2026-06-20"
+updated: '2026-06-20'
+horizon:
+  current_goal: Podcasting 2.0 verification scope, inputs/outputs, and deployment
+    model layouts.
+  next_milestone: Document verification inputs/outputs and deployment layout.
+  blocked_by: null
+  review_cadence: weekly
 ---
+
 
 # Agent Instructions — Antigravity_Assayer (aegis-os)
 

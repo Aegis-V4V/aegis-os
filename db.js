@@ -68,7 +68,7 @@ function initDb() {
             FOREIGN KEY(episode_id) REFERENCES episodes(id)
         )`);
 
-        // --- The Assayer Wallet (Phase 4) ---
+        // --- The aegis-os Wallet (Phase 4) ---
         db.run(`CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY,
             pubkey TEXT UNIQUE, -- LNURL pubkey

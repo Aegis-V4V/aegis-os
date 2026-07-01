@@ -1,8 +1,8 @@
 import sqlite3
 import json
 import os
-
-DB_PATH = os.path.expanduser('~/aegis-os/data/aegis_brain.db')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.environ.get('BRAIN_DB', os.path.join(script_dir, 'data', 'aegis_brain_sqlite.db'))
 
 def audit():
     conn = sqlite3.connect(DB_PATH)

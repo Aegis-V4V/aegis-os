@@ -7,7 +7,8 @@ import os
 import json
 from datetime import datetime
 
-DB_PATH = os.path.expanduser('~/aegis-os/data/aegis_brain.db')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.environ.get('BRAIN_DB', os.path.join(script_dir, 'data', 'aegis_brain_sqlite.db'))
 
 def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)

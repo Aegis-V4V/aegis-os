@@ -7,7 +7,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 // Connect to the local metadata cache to find "un-scanned" shows
-const metaDb = new sqlite3.Database(path.join(__dirname, 'data', 'spider.db'));
+const metaDb = new sqlite3.Database(process.env.DB_PATH || path.join(__dirname, 'data', 'spider.db'));
 
 /**
  * The Scout's Route: Pick a random show that hasn't been reaped yet.

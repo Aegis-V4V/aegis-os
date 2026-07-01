@@ -6,8 +6,9 @@ from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from reaper import reap_feed, init_db
 
-INDEX_DB = os.path.expanduser('~/aegis-os/data/podcastindex_feeds.db')
-BRAIN_DB = os.path.expanduser('~/aegis-os/data/aegis_brain.db')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+INDEX_DB = os.environ.get('INDEX_DB', os.path.join(script_dir, 'data', 'podcastindex_feeds.db'))
+BRAIN_DB = os.environ.get('BRAIN_DB', os.path.join(script_dir, 'data', 'aegis_brain_sqlite.db'))
 
 # Cache max ID from podcastindex_feeds.db
 max_id = None

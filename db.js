@@ -6,7 +6,7 @@ const dataDir = path.resolve(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
 }
-const dbPath = path.join(dataDir, 'spider.db');
+const dbPath = process.env.DB_PATH || path.join(dataDir, 'spider.db');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error("Error opening database:", err.message);

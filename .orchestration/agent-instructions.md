@@ -1,17 +1,24 @@
----
+﻿---
 repo_name: aegis-os
 repo_alias: aegis-os
 repo_type: Podcast Infrastructure / Compliance Engine
 security_tier: 2
 lifecycle: Active
 cluster: V4V
-updated: "2026-06-20"
+updated: '2026-06-20'
+horizon:
+  current_goal: Podcasting 2.0 verification scope, inputs/outputs, and deployment
+    model layouts.
+  next_milestone: Document verification inputs/outputs and deployment layout.
+  blocked_by: null
+  review_cadence: weekly
 ---
 
-# Agent Instructions — aegis-os (aegis-os)
+
+# Agent Instructions â€” aegis-os (aegis-os)
 
 ## Security Tier: Strong (2)
-Standard agent autonomy. All work via PR — never push directly to main. No secrets in code or commit messages.
+Standard agent autonomy. All work via PR â€” never push directly to main. No secrets in code or commit messages.
 
 ## What this repo does
 Aegis OS is a headless podcast intelligence harvester, compliance evaluator, and Value4Value (V4V) verification engine. It:
@@ -26,10 +33,10 @@ The name "aegis-os" refers to compliance assaying (evaluating RSS feeds against 
 V4V
 
 ## Related repos
-- `ss-aegis-os-space` — domain/site shell for aegis-os.space (this project's public face)
+- `ss-aegis-os-space` â€” domain/site shell for aegis-os.space (this project's public face)
 
 ## Deployment
-- **Remote brain**: chantecler-01 (`67.205.162.200`) — systemd services `aegis-brain-api` and `aegis-scout`
+- **Remote brain**: chantecler-01 (`67.205.162.200`) â€” systemd services `aegis-brain-api` and `aegis-scout`
 - **Local dashboard**: `C:\Users\aewoo\Desktop\Antigravity Workspace\` (workstation, to be migrated to `C:\dev\repos\`)
 - **Deploy path on host**: `/home/aewoodyard/aegis-os/`
 
@@ -45,7 +52,7 @@ V4V
 ```yaml
 horizon:
   goal: "Complete aegis-os rename, consolidate workstation repo to C:\\dev\\repos\\, establish full governance"
-  active_sub_state: "Active — deployed on chantecler-01"
+  active_sub_state: "Active â€” deployed on chantecler-01"
   next_milestone: "Repo renamed to aegis-os, workstation clone moved to C:\\dev\\repos\\"
   blockers: []
 ```
@@ -53,7 +60,7 @@ horizon:
 ## Agent rules
 1. Read this file before any action in this repo.
 2. All changes via PR to main. No direct pushes.
-3. No credentials, tokens, or secrets in any file tracked by git. `.env` is gitignored — keep it that way.
-4. Daemons run on chantecler-01 — do not modify systemd service files without noting deployment steps in the PR.
+3. No credentials, tokens, or secrets in any file tracked by git. `.env` is gitignored â€” keep it that way.
+4. Daemons run on chantecler-01 â€” do not modify systemd service files without noting deployment steps in the PR.
 5. Portfolio-wide rules: `stax/ops/stax-format.md`
 6. If uncertain about scope, check `stax/handoffs/handoff-current.md` for orchestration context.

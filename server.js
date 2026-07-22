@@ -15,12 +15,21 @@ app.use(express.json());
 app.get('/health', (req, res) => res.status(200).send('OK'));
 
 // --- Phase 9: Secure Monolith Publishing ---
-const authUser = process.env.BASIC_AUTH_USER || 'Pc2.0-Guest';
-const authPass = process.env.BASIC_AUTH_PASS || 'rCh4fw56t@@8MA';
+function requireEnv(name) {
+    const value = process.env[name];
+    if (!value) {
+        console.error('[CONFIG] Missing required environment variable: ' + name);
+        process.exit(1);
+    }
+    return value;
+}
+
+const authUser = requireEnv('BASIC_AUTH_USER');
+const authPass = requireEnv('BASIC_AUTH_PASS');
 app.use(basicAuth({
     users: { [authUser]: authPass },
     challenge: true,
-    realm: 'Antigravity Spaceship'
+    realm: 'Aegis OS'
 }));
 
 // --- Phase 2.3: Fiat-to-Sat Evaluation Policy ---
@@ -791,8 +800,8 @@ function executeSatSplit(totalSats, txId) {
     console.log(`[LEDGER] 3-Way Sat Split verified for TX#${txId}. Pool incremented by ${jackpotCut.toFixed(1)} Sats.`);
 }
 
-// Utility: Execute Platform-Specific aegis-os Boost Split (20% Index, 80% House, 0% Jackpot)
-function executeaegis-osBoostSplit(totalSats, txId) {
+// Utility: Execute Platform-Specific Assayer Boost Split (20% Index, 80% House, 0% Jackpot)
+function executeAssayerBoostSplit(totalSats, txId) {
     const amount = Math.abs(totalSats);
     const indexCut = amount * 0.20;
     const houseCut = amount * 0.80; // Rest kept by system
@@ -802,10 +811,10 @@ function executeaegis-osBoostSplit(totalSats, txId) {
         (tx_id, index_node_sats, jackpot_sats, house_sats, total_sats) 
         VALUES (?, ?, ?, ?, ?)`, 
         [txId, indexCut, jackpotCut, houseCut, amount], (err) => {
-            if (err) console.error("aegis-os Boost Split Record Error:", err);
+            if (err) console.error("Assayer Boost Split Record Error:", err);
         });
 
-    console.log(`[LEDGER] aegis-os Boost Split verified for TX#${txId}. 20% Index (${indexCut.toFixed(1)}) // 80% House (${houseCut.toFixed(1)}).`);
+    console.log(`[LEDGER] Assayer Boost Split verified for TX#${txId}. 20% Index (${indexCut.toFixed(1)}) // 80% House (${houseCut.toFixed(1)}).`);
 }
 
 // 1. Connection Sync

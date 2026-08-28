@@ -1,0 +1,18 @@
+[tool.uv.workspace]
+members = [
+    "apps/aegis-os",
+]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = [
+    "apps/aegis-os/tests",
+]

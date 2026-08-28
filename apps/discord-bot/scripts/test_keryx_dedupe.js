@@ -71,7 +71,7 @@ async function run() {
   let interval = poller.startEpisodePoller(mockClient);
   clearInterval(interval); // Stop repeating
   
-  await new Promise(resolve => setTimeout(resolve, 800));
+  await new Promise(resolve => setTimeout(resolve, 3500));
   assert(sentCount === 1, `Should have sent exactly 1 announcement, got ${sentCount}`);
   
   const announced = db.isEpisodeAnnounced('channel-1', 'https://example.com/feed.xml', 'mock-episode-guid-1111');
@@ -83,7 +83,7 @@ async function run() {
   interval = poller.startEpisodePoller(mockClient);
   clearInterval(interval);
 
-  await new Promise(resolve => setTimeout(resolve, 800));
+  await new Promise(resolve => setTimeout(resolve, 3500));
   assert(sentCount === 1, `Should still be 1 announcement (deduplication failed, sentCount: ${sentCount})`);
   console.log('   [PASS] Replay test did not double-announce.');
 

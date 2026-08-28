@@ -6,7 +6,6 @@
   "workspaces": [
     "apps/aegis-os",
     "apps/discord-bot",
-    "packages/*",
     "web/*"
   ],
   "scripts": {

@@ -40,9 +40,12 @@ No deployment is performed by consolidation. The checked-in systemd units assume
 monorepo checkout is `/home/aewoodyard/repos/aegis-console` and must be installed manually:
 
 1. Build and validate the exact reviewed commit in a fresh checkout.
-2. Copy `ops/aegis-brain-api.service`, `ops/aegis-scout.service`, and
+2. Create `/home/aewoodyard/repos/aegis-console/.venv` from the root Python workspace and
+   install its locked runtime dependencies. The units intentionally fail closed if that
+   deployment environment does not exist.
+3. Copy `ops/aegis-brain-api.service`, `ops/aegis-scout.service`, and
    `apps/discord-bot/ops/aegis-pod-bot.service` to `/etc/systemd/system/`.
-3. Run `systemctl daemon-reload`.
-4. Restart each service individually and verify its journal and health endpoint.
+4. Run `systemctl daemon-reload`.
+5. Restart each service individually and verify its journal and health endpoint.
 
 Do not perform these steps as part of repository consolidation or PR merge.

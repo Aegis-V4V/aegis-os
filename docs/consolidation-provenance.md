@@ -8,11 +8,14 @@
 | `apps/discord-bot` | `woodyardae/aegis-pod-bot` | `bcba00878e2e47d45166d8c278048ae40ebca590` | Discord audio, listening rooms, Podcast Index, and V4V integration |
 | `web/portal` | `woodyardae/ss-aegis-os-space` | `21a68de9f8ac6e8c22ddb98ee7eb6f75fd8a5dd3` | Pod Assay, the distinct parked `podassay.space` module and origin of Aegis |
 
-The imported Discord bot and Pod Assay trees match those source tips exactly. Their later
-default-branch commits (`e96b6c25ccf4b8da3df924081e7e1a3f9d1cbcae` and
-`9e190d8e4a6db98de708daabaceb3dc0206a2a7f`) only add standalone deprecation banners;
-those banners are not source deltas and are not imported here. The standalone repositories
-remain untouched and unarchived.
+At import time, the filtered Discord bot and Pod Assay trees matched those source tips exactly.
+Subsequent monorepo changes intentionally removed generated/untrusted artifacts, updated the
+Discord systemd unit, and recorded the Pod Assay owner exception in its local governance file.
+Their later standalone default-branch commits
+(`e96b6c25ccf4b8da3df924081e7e1a3f9d1cbcae` and
+`9e190d8e4a6db98de708daabaceb3dc0206a2a7f`) only add deprecation banners; those banners are
+not source deltas and are not imported here. This operation does not mutate or archive either
+standalone repository.
 
 ## Pod Assay exception
 
@@ -45,7 +48,10 @@ monorepo checkout is `/home/aewoodyard/repos/aegis-console` and must be installe
    deployment environment does not exist.
 3. Copy `ops/aegis-brain-api.service`, `ops/aegis-scout.service`, and
    `apps/discord-bot/ops/aegis-pod-bot.service` to `/etc/systemd/system/`.
-4. Run `systemctl daemon-reload`.
-5. Restart each service individually and verify its journal and health endpoint.
+4. Before the first bot start, copy any existing standalone bot database to
+   `/var/lib/aegis-pod-bot/bot.db` with ownership matching the service user. The bot unit uses
+   `StateDirectory=aegis-pod-bot` so fresh deployments create this writable directory safely.
+5. Run `systemctl daemon-reload`.
+6. Restart each service individually and verify its journal and health endpoint.
 
 Do not perform these steps as part of repository consolidation or PR merge.

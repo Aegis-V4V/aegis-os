@@ -14,12 +14,13 @@ StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=aegis-pod-bot
 EnvironmentFile=/home/aewoodyard/repos/aegis-console/apps/discord-bot/.env
+Environment=DB_PATH=/var/lib/aegis-pod-bot/bot.db
+StateDirectory=aegis-pod-bot
 
 # Security hardening
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/home/aewoodyard/repos/aegis-console/apps/discord-bot/data
 
 [Install]
 WantedBy=multi-user.target

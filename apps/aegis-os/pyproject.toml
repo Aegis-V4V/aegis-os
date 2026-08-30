@@ -8,6 +8,7 @@ version = "3.0.0"
 description = "Aegis OS Podcasting 2.0 Engine & Brain API"
 requires-python = ">=3.12"
 dependencies = [
+    "flask>=3.0.0",
     "requests>=2.31.0",
     "duckdb>=1.0.0",
 ]

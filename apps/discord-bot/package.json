@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && node scripts/copy-assets.js",
+    "test": "node scripts/test_agora_commands.js && node scripts/test_agora_state.js && node scripts/test_akroasis_dashboard.js && node scripts/test_asphaleia_health.js && node scripts/test_chapters_comments.js && node scripts/test_choros_rhema.js && node scripts/test_dashboard_hardening.js && node scripts/test_horai_sync.js && node scripts/test_keryx_dedupe.js",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "deploy-commands": "ts-node src/deploy-commands.ts",

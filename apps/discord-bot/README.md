@@ -59,8 +59,8 @@ Use the generated URL to invite the bot to your guild.
 ### 3. Install
 
 ```bash
-git clone https://github.com/woodyardae/aegis-pod-bot.git
-cd aegis-pod-bot
+git clone https://github.com/woodyardae/aegis-os.git
+cd aegis-os/apps/discord-bot
 npm install
 ```
 

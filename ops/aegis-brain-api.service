@@ -1,0 +1,14 @@
+[Unit]
+Description=Aegis Brain API (Sparky)
+After=network.target
+
+[Service]
+ExecStart=/home/aewoodyard/repos/aegis-console/.venv/bin/python /home/aewoodyard/repos/aegis-console/apps/aegis-os/brain_api.py
+WorkingDirectory=/home/aewoodyard/repos/aegis-console/apps/aegis-os
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=aewoodyard
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,26 @@
+[Unit]
+Description=Aegis Pod Bot — Podcasting 2.0 / V4V Discord Bot
+After=network.target aegis-brain-api.service
+Wants=aegis-brain-api.service
+
+[Service]
+Type=simple
+User=aewoodyard
+WorkingDirectory=/home/aewoodyard/repos/aegis-console/apps/discord-bot
+ExecStart=/usr/bin/node dist/index.js
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=aegis-pod-bot
+EnvironmentFile=/home/aewoodyard/repos/aegis-console/apps/discord-bot/.env
+Environment=DB_PATH=/var/lib/aegis-pod-bot/bot.db
+StateDirectory=aegis-pod-bot
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

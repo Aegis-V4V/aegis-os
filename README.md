@@ -1,44 +1,43 @@
-# aegis-os
+# Aegis Console
 
+The unified Podcasting 2.0 operating system, audio console, and Discord streaming suite.
 
-> [!IMPORTANT]
-> **🤖 FOR AI AGENTS, CODING COMPANIONS, AND AUTOMATED SYSTEMS:**
-> This repository is governed by the **STAX Operating System**. Before taking *any* action, analyzing files, or proposing modifications, you **must** read and strictly adhere to:
-> 1. [ops/soul.md](ops/soul.md) (Philosophical Compass)
-> 2. [ops/agent-rules.md](ops/agent-rules.md) (Enforceable Rules & the 7-Step Sequence)
->
-> You are required to run through the **Inventory ➔ Summarize ➔ Classify ➔ Propose ➔ Implement ➔ Update Docs ➔ Archive Leftovers** sequence for every run.
+---
 
-## Dashboard Extensions
+## 🏛️ Architecture & Workspace
 
-### Integrations, Skills & Telemetry Panels
+* **`apps/aegis-os`** (`aegis-os`): Core Podcasting 2.0 harvester, crawler, RSS validator, PostgreSQL/SQLite data pipeline, web server, and web player frontend.
+* **`apps/discord-bot`** (`aegis-pod-bot`): TypeScript Discord bot streaming episodes and radio stations into voice channels with live boostagram feeds and listening rooms.
+* **`web/portal`** (**Pod Assay**): Distinct, parked `podassay.space` module whose history predates Aegis. It retains its own identity and module boundary under the owner-authorized consolidation; it is not a generic Aegis portal or redirect.
+* **`ops/`**: Core systemd units (`aegis-brain-api.service`, `aegis-scout.service`) and deployment runbooks. The bot unit is at `apps/discord-bot/ops/aegis-pod-bot.service`.
 
-> Branch: `feat/aegis-os-integrations-panel`
+See [`docs/consolidation-provenance.md`](docs/consolidation-provenance.md) for source repositories, imported tips, ownership boundaries, and the Pod Assay exception.
 
-| Document | Purpose |
-|----------|---------|
-| [docs/aegis-os-integrations-spec.md](docs/aegis-os-integrations-spec.md) | Provider list, auth model, skills model, telemetry read contract |
-| [docs/aegis-os-dashboard-wireframe.md](docs/aegis-os-dashboard-wireframe.md) | ASCII wireframe — unified three-panel layout |
+---
 
-**Component scaffold** (`frontend/src/`):
+## 🚀 Quick Start
 
-```
-integrations/
-  IntegrationsPanel.js   — panel root stub
-  ProviderCard.js        — provider card stub
-  providers.js           — static provider registry
-
-skills/
-  SkillsPanel.js         — panel root stub
-  SkillCard.js           — skill row stub
-  skills-config.js       — local skill list loader stub
-
-telemetry/
-  TelemetryPanel.js      — panel root stub
-  telemetry-client.js    — T1 read-contract client stub
+### 1. Install Workspace Dependencies
+```bash
+npm install
 ```
 
-> ⚠️ **Spec/scaffold only.** No live auth, no real tokens, no message sending.
-> Implementation is a separate batch, gated on spec approval.
+### 2. Build Workspace
+```bash
+npm run build
+```
 
-
+### 3. Run Test Suites
+```bash
+# Run Discord bot integration test suites
+cd apps/discord-bot
+node scripts/test_agora_commands.js
+node scripts/test_agora_state.js
+node scripts/test_akroasis_dashboard.js
+node scripts/test_asphaleia_health.js
+node scripts/test_chapters_comments.js
+node scripts/test_choros_rhema.js
+node scripts/test_dashboard_hardening.js
+node scripts/test_horai_sync.js
+node scripts/test_keryx_dedupe.js
+```

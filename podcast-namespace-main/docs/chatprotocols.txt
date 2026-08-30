@@ -1,4 +1,0 @@
-irc
-xmpp
-nostr
-matrix

@@ -10,6 +10,10 @@ type: reference
 updated_at: "2026-05-17T19:11:22Z"
 ---
 
+> [!WARNING]
+> Historical pre-monorepo record only. Current module boundaries and deployment paths are defined
+> in `docs/consolidation-provenance.md`.
+
 # Solopreneur Command Center Chat History & Process Index 📝
 
 ---

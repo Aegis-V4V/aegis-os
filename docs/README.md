@@ -25,8 +25,8 @@ Aegis OS is a high-performance headless podcast intelligence harvester, scout, a
 * **Main Workstation Repository**: `C:\Users\aewoo\Desktop\Antigravity Workspace\adventures-of-sparky-and-claw`
 * **Headless Deployment Host**: DigitalOcean Droplet **`chantecler-01`** (`67.205.162.200`)
 * **Local Plans & Prelims**:
-  * [plans/cloud_migration_walkthrough.md](plans/cloud_migration_walkthrough.md) — Detailed machine-readable migration logs and systemd service scripts.
-  * [plans/cloud_migration_summary.md](plans/cloud_migration_summary.md) — Condensed, bulleted history of all chat work completed across Aegis OS and Access Paralegal projects.
+  * [plans/cloud_migration_walkthrough.md](plans/cloud_migration_walkthrough.md) — Legacy pre-monorepo migration record; do not use its paths as deployment instructions.
+  * [plans/cloud_migration_summary.md](plans/cloud_migration_summary.md) — Legacy pre-monorepo summary retained for historical context.
 
 ## 🛠️ System Overview
 

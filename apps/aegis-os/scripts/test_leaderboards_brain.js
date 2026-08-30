@@ -33,7 +33,8 @@ async function run() {
 
   // 3. Initialize Python Brain SQLite DB using reaper.py
   console.log('3. Running python reaper.py to initialize sqlite brain database...');
-  const pyResult = spawnSync('python', [path.resolve(__dirname, '../reaper.py')]);
+  const python = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
+  const pyResult = spawnSync(python, [path.resolve(__dirname, '../reaper.py')]);
   
   if (pyResult.status !== 0) {
     console.warn(`Warning: python execution returned exit code ${pyResult.status}`);

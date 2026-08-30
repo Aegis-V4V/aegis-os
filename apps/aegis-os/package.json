@@ -11,7 +11,7 @@
     "build": "cd frontend && npm install && npm run build",
     "setup": "node download_db.js",
     "postinstall": "npm rebuild sqlite3 --build-from-source",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node scripts/test_aegis_os_integration.js && node scripts/test_leaderboards_brain.js"
   },
   "keywords": [],
   "author": "",

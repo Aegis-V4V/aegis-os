@@ -3,8 +3,8 @@ Description=Aegis OS Scout Daemon
 After=network.target
 
 [Service]
-ExecStart=/home/aewoodyard/aegis-os/venv/bin/python -u /home/aewoodyard/aegis-os/scout.py
-WorkingDirectory=/home/aewoodyard/aegis-os
+ExecStart=/home/aewoodyard/repos/aegis-console/.venv/bin/python -u /home/aewoodyard/repos/aegis-console/apps/aegis-os/scout.py
+WorkingDirectory=/home/aewoodyard/repos/aegis-console/apps/aegis-os
 StandardOutput=inherit
 StandardError=inherit
 Restart=always

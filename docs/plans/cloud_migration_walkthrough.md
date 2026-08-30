@@ -10,6 +10,10 @@ type: reference
 updated_at: "2026-05-17T19:11:22Z"
 ---
 
+> [!WARNING]
+> Historical pre-monorepo record only. Its checkout paths and systemd examples are superseded by
+> `docs/consolidation-provenance.md` and the units under `ops/`. Do not execute these instructions.
+
 # Aegis OS Cloud Migration: Full Server Setup & Architecture Handoff 📜
 
 ---

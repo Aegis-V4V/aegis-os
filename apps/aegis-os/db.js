@@ -1,129 +1,143 @@
-const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
+﻿const fs = require('fs');
 const path = require('path');
+const { DatabaseSync } = require('node:sqlite');
 
 const dataDir = path.resolve(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
 }
-const dbPath = process.env.DB_PATH || path.join(dataDir, 'spider.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error("Error opening database:", err.message);
-    } else {
-        console.log("Connected to the SQLite database.");
-        initDb();
+const dbFilePath = process.env.DB_PATH || path.join(dataDir, 'spider.db');
+
+class NodeSqliteCompat {
+    constructor(targetPath) {
+        this.raw = new DatabaseSync(targetPath);
+        console.log(`Connected to the SQLite database (node:sqlite native ABI 137).`);
+        initDb(this);
     }
-});
 
-function initDb() {
-    db.serialize(() => {
-        // --- Core Podcast Data ---
-        db.run(`CREATE TABLE IF NOT EXISTS feeds (
-            id INTEGER PRIMARY KEY,
-            podcast_index_id INTEGER UNIQUE,
-            title TEXT,
-            url TEXT,
-            medium TEXT,
-            score_v4v INTEGER DEFAULT 0,
-            score_community INTEGER DEFAULT 0,
-            score_technical INTEGER DEFAULT 0,
-            omni_score INTEGER DEFAULT 0,
-            last_checked DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+    serialize(callback) {
+        if (typeof callback === 'function') callback();
+    }
 
-        db.run(`CREATE TABLE IF NOT EXISTS episodes (
-            id INTEGER PRIMARY KEY,
-            podcast_index_id INTEGER UNIQUE,
-            feed_id INTEGER,
-            title TEXT,
-            enclosure_url TEXT,
-            timestamp DATETIME,
-            FOREIGN KEY(feed_id) REFERENCES feeds(id)
-        )`);
+    run(sql, params = [], callback = () => {}) {
+        if (typeof params === 'function') {
+            callback = params;
+            params = [];
+        }
+        try {
+            const stmt = this.raw.prepare(sql);
+            const info = stmt.run(...params);
+            callback.call({ lastID: Number(info.lastInsertRowid), changes: Number(info.changes) }, null);
+        } catch (err) {
+            callback(err);
+        }
+        return this;
+    }
 
-        // --- Community/Identity ---
-        db.run(`CREATE TABLE IF NOT EXISTS persons (
-            id INTEGER PRIMARY KEY,
-            name TEXT,
-            href TEXT,
-            role TEXT,
-            group_name TEXT,
-            feed_id INTEGER,
-            episode_id INTEGER,
-            FOREIGN KEY(feed_id) REFERENCES feeds(id),
-            FOREIGN KEY(episode_id) REFERENCES episodes(id)
-        )`);
+    get(sql, params = [], callback = () => {}) {
+        if (typeof params === 'function') {
+            callback = params;
+            params = [];
+        }
+        try {
+            const stmt = this.raw.prepare(sql);
+            const row = stmt.get(...params);
+            callback(null, row);
+        } catch (err) {
+            callback(err);
+        }
+        return this;
+    }
 
-        // --- V4V Economy ---
-        db.run(`CREATE TABLE IF NOT EXISTS v4v_transactions (
-            id INTEGER PRIMARY KEY,
-            feed_id INTEGER,
-            episode_id INTEGER,
-            amount_sats INTEGER,
-            lightning_node TEXT,
-            recipient_name TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(feed_id) REFERENCES feeds(id),
-            FOREIGN KEY(episode_id) REFERENCES episodes(id)
-        )`);
+    all(sql, params = [], callback = () => {}) {
+        if (typeof params === 'function') {
+            callback = params;
+            params = [];
+        }
+        try {
+            const stmt = this.raw.prepare(sql);
+            const rows = stmt.all(...params);
+            callback(null, rows || []);
+        } catch (err) {
+            callback(err);
+        }
+        return this;
+    }
 
-        // --- The aegis-os Wallet (Phase 4) ---
-        db.run(`CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            pubkey TEXT UNIQUE, -- LNURL pubkey
-            email TEXT UNIQUE,
-            password_hash TEXT,
-            credit_balance_sats INTEGER DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+    close(callback = () => {}) {
+        try {
+            this.raw.close();
+            callback(null);
+        } catch (err) {
+            callback(err);
+        }
+    }
+}
 
-        db.run(`CREATE TABLE IF NOT EXISTS ledger_transactions (
-            id INTEGER PRIMARY KEY,
-            user_id INTEGER,
-            type TEXT, -- 'DEPOSIT' or 'VERIFICATION_FEE' or 'BOOST'
-            provider TEXT, -- 'ALBY', 'STRIKE', 'INTERNAL'
-            amount_sats INTEGER,
-            reference_id TEXT, -- e.g. Strike invoice ID or Lightning payment hash
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(user_id) REFERENCES users(id)
-        )`);
+const db = new NodeSqliteCompat(dbFilePath);
 
-        // --- Project Astrogation Mirror Tables ---
-        db.run(`CREATE TABLE IF NOT EXISTS podcast_metadata (
-            id INTEGER PRIMARY KEY,
-            feed_url TEXT UNIQUE,
-            star_tier TEXT,
-            star_coordinates TEXT, -- JSON representation of X,Y,Z
-            verified_status INTEGER DEFAULT 0,
-            platform_boosts INTEGER DEFAULT 0,
-            last_scanned_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
+function initDb(databaseInstance) {
+    databaseInstance.run(`CREATE TABLE IF NOT EXISTS feeds (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        podcast_index_id INTEGER UNIQUE,
+        title TEXT,
+        url TEXT,
+        original_url TEXT,
+        link TEXT,
+        description TEXT,
+        author TEXT,
+        image TEXT,
+        artwork TEXT,
+        newest_item_pub_date INTEGER,
+        itunes_id INTEGER,
+        trend_score REAL,
+        language TEXT,
+        categories TEXT,
+        score_technical REAL DEFAULT 0.0,
+        omni_score REAL DEFAULT 0.0,
+        value_model TEXT,
+        score_quality REAL DEFAULT 0.0,
+        score_speed REAL DEFAULT 0.0,
+        score_overall REAL DEFAULT 0.0,
+        score_v4v REAL DEFAULT 0.0,
+        score_community REAL DEFAULT 0.0,
+        medium TEXT DEFAULT 'podcast',
+        generator TEXT,
+        value_block TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
 
-        db.run(`CREATE TABLE IF NOT EXISTS revenue_split_ledger (
-            id INTEGER PRIMARY KEY,
-            tx_id INTEGER,
-            index_node_sats REAL,
-            jackpot_sats REAL,
-            house_sats REAL,
-            total_sats INTEGER,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(tx_id) REFERENCES ledger_transactions(id)
-        )`);
+    databaseInstance.run(`CREATE TABLE IF NOT EXISTS episodes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        feed_id INTEGER,
+        title TEXT,
+        link TEXT,
+        guid TEXT UNIQUE,
+        pub_date INTEGER,
+        enclosure_url TEXT,
+        enclosure_type TEXT,
+        enclosure_length INTEGER,
+        duration INTEGER,
+        value_block TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(feed_id) REFERENCES feeds(id)
+    )`);
 
-        // Persistent System Variables (e.g. Global Jackpot pool)
-        db.run(`CREATE TABLE IF NOT EXISTS system_state (
-            key TEXT PRIMARY KEY,
-            value TEXT
-        )`, () => {
-            // Initialize default jackpot of 0 SATS (Pure, non-fictional start)
-            db.run("INSERT OR IGNORE INTO system_state (key, value) VALUES ('global_jackpot', '0')");
-            // Migration: Safely reset any previous 5000 placeholder to 0
-            db.run("UPDATE system_state SET value = '0' WHERE key = 'global_jackpot' AND value = '5000'");
-        });
-
-        console.log("Database schema initialized.");
-    });
+    databaseInstance.run(`CREATE TABLE IF NOT EXISTS value_recipients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        feed_id INTEGER,
+        episode_id INTEGER,
+        name TEXT,
+        type TEXT,
+        address TEXT,
+        split INTEGER,
+        fee INTEGER DEFAULT 0,
+        custom_key TEXT,
+        custom_value TEXT,
+        FOREIGN KEY(feed_id) REFERENCES feeds(id),
+        FOREIGN KEY(episode_id) REFERENCES episodes(id)
+    )`);
 }
 
 module.exports = db;

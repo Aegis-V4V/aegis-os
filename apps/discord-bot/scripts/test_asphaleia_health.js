@@ -1,3 +1,5 @@
+/* SESSION_MOCK_PATCH */
+process.env.NODE_ENV = "test";
 const { startDashboardServer } = require('../dist/dashboard/server');
 const { telemetry } = require('../dist/modules/telemetry');
 

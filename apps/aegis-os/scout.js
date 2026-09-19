@@ -1,13 +1,18 @@
+const db = require('./db.js');
+const sqlite3 = {
+  OPEN_READWRITE: 0,
+  OPEN_CREATE: 0,
+  verbose: function() { return this; },
+  Database: function() { return db; }
+};
 // AEGIS SCOUT | The Deep Index Explorer
 // Low-priority, background harvester that finds the "weird" stuff in the index.
 
 const axios = require('axios');
 const { reapFeed } = require('./reaper');
-const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
 // Connect to the local metadata cache to find "un-scanned" shows
-const metaDb = new sqlite3.Database(process.env.DB_PATH || path.join(__dirname, 'data', 'spider.db'));
 
 /**
  * The Scout's Route: Pick a random show that hasn't been reaped yet.

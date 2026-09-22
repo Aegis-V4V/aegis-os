@@ -1,4 +1,10 @@
 import { type Client } from 'discord.js';
+import {
+  persistRoomPlaybackState,
+  loadRoomPlaybackState,
+  loadAllRoomPlaybackStates,
+  removeRoomPlaybackState
+} from '../db/spider-db';
 
 export interface AgoraListener {
   userId: string;
@@ -87,6 +93,7 @@ class AgoraRoomManager {
       playbackRate: 1.0,
     };
     this.rooms.set(roomId, room);
+    persistRoomPlaybackState(room);
     console.log(`[Agora] Initialized listening room "${roomId}" for episode "${episodeTitle}"`);
     
     // Initialize Rhema floor state for this room
@@ -126,6 +133,7 @@ class AgoraRoomManager {
     }
 
     console.log(`[Agora] Listener "${listener.username}" (Wallet: ${listener.walletAddress || 'none'}) joined room "${roomId}"`);
+    persistRoomPlaybackState(room);
     this.emitEvent(roomId, { type: 'JOIN', listener: updatedListener }, room);
     return room;
   }
@@ -154,6 +162,7 @@ class AgoraRoomManager {
       rhemaFloorManager.clearFloor(roomId);
     }
 
+    persistRoomPlaybackState(room);
     this.emitEvent(roomId, { type: 'LEAVE', userId }, room);
     return room;
   }
@@ -170,6 +179,7 @@ class AgoraRoomManager {
     if (exists) {
       room.hostUserId = hostUserId;
       console.log(`[Agora] Host updated for room "${roomId}" to "${hostUserId}"`);
+      persistRoomPlaybackState(room);
     }
   }
 
@@ -190,6 +200,7 @@ class AgoraRoomManager {
     room.playbackLastUpdatedAt = Date.now();
 
     const eventType = isPlaying ? 'PLAY' : 'PAUSE';
+    persistRoomPlaybackState(room);
     this.emitEvent(roomId, { type: eventType, hostPositionMs: positionMs, hostUserId }, room);
   }
 
@@ -209,6 +220,7 @@ class AgoraRoomManager {
     room.playbackLastUpdatedAt = Date.now();
 
     console.log(`[Agora] Host "${hostUserId}" seeked to ${positionMs}ms in room "${roomId}"`);
+    persistRoomPlaybackState(room);
     this.emitEvent(roomId, { type: 'SEEK', hostPositionMs: positionMs, hostUserId }, room);
   }
 
@@ -237,6 +249,7 @@ class AgoraRoomManager {
     const listener = room.listeners.find(l => l.userId === userId);
     if (listener) {
       listener.lastObservedPositionMs = positionMs;
+      persistRoomPlaybackState(room);
     }
   }
 
@@ -254,6 +267,11 @@ class AgoraRoomManager {
    * Fetches room state.
    */
   public getRoom(roomId: string): AgoraRoom | null {
+    const persisted = loadRoomPlaybackState(roomId);
+    if (persisted) {
+      this.rooms.set(roomId, persisted);
+      return persisted;
+    }
     return this.rooms.get(roomId) || null;
   }
 
@@ -269,6 +287,7 @@ class AgoraRoomManager {
     } else {
       room.isPlaying = true;
       room.playbackLastUpdatedAt = Date.now();
+      persistRoomPlaybackState(room);
     }
     return room;
   }
@@ -284,6 +303,7 @@ class AgoraRoomManager {
       this.updatePlaybackState(roomId, room.hostUserId, false, room.playbackPositionMs);
     } else {
       room.isPlaying = false;
+      persistRoomPlaybackState(room);
     }
     return room;
   }
@@ -317,6 +337,7 @@ class AgoraRoomManager {
     } else {
       room.isPlaying = false;
     }
+    persistRoomPlaybackState(room);
     return room;
   }
 
@@ -324,6 +345,13 @@ class AgoraRoomManager {
    * Lists all active rooms.
    */
   public getActiveRooms(): AgoraRoom[] {
+    const persistedList = loadAllRoomPlaybackStates();
+    if (persistedList.length > 0) {
+      for (const r of persistedList) {
+        this.rooms.set(r.roomId, r);
+      }
+      return persistedList;
+    }
     return Array.from(this.rooms.values());
   }
 }

@@ -1,4 +1,9 @@
 import { agoraRoomManager } from './agora-room';
+import {
+  persistTimetableItem,
+  loadRoomTimetable,
+  deleteRoomTimetable
+} from '../db/spider-db';
 
 export interface ScheduledItem {
   id: string;
@@ -30,10 +35,9 @@ class HoraiScheduler {
    * Adds an item to the linear playout schedule for a specific room.
    */
   public addScheduledItem(roomId: string, item: ScheduledItem): void {
-    const list = this.schedules.get(roomId) ?? [];
-    list.push(item);
-    // Sort chronological by start time
-    list.sort((a, b) => a.startTime - b.startTime);
+    persistTimetableItem(roomId, item);
+
+    const list = loadRoomTimetable(roomId);
     this.schedules.set(roomId, list);
     
     // Invalidate the cache for this room
@@ -46,7 +50,7 @@ class HoraiScheduler {
    * Looks up what is currently scheduled to play at a specific timestamp.
    */
   public getScheduledItem(roomId: string, timestamp: number = Date.now()): ScheduledItem | null {
-    const list = this.schedules.get(roomId);
+    const list = loadRoomTimetable(roomId);
     if (!list || list.length === 0) return null;
 
     // Find the item whose active interval [startTime, startTime + duration] covers the timestamp
@@ -71,7 +75,7 @@ class HoraiScheduler {
     }
 
     this.cacheMisses++;
-    const list = this.schedules.get(roomId) ?? [];
+    const list = loadRoomTimetable(roomId);
     const upcoming = list
       .filter(item => item.startTime > timestamp)
       .slice(0, limit);
@@ -125,13 +129,14 @@ class HoraiScheduler {
    * Gets the complete list of scheduled items for a room.
    */
   public getRoomSchedule(roomId: string): ScheduledItem[] {
-    return this.schedules.get(roomId) ?? [];
+    return loadRoomTimetable(roomId);
   }
 
   /**
    * Clears all scheduled events for a room.
    */
   public clearRoomSchedule(roomId: string): void {
+    deleteRoomTimetable(roomId);
     this.schedules.delete(roomId);
     this.scheduleCache.delete(roomId);
     console.log(`[Horai] Cleared all scheduled events for room "${roomId}"`);

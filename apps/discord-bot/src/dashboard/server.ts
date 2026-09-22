@@ -52,12 +52,21 @@ export function startDashboardServer(client: Client): express.Application {
   app.use(express.json());
 
   // Configure SQLite stateful session store
+  let sessionStore: any;
+  try {
+    sessionStore = (process.env.NODE_ENV === 'production')
+      ? new SQLiteStore({
+          db: 'sessions.db',
+          dir: path.resolve(process.cwd(), 'data'),
+        })
+      : new session.MemoryStore();
+  } catch (_) {
+    sessionStore = new session.MemoryStore();
+  }
+
   app.use(
     session({
-      store: new SQLiteStore({
-        db: 'sessions.db',
-        dir: './data',
-      }) as any,
+      store: sessionStore,
       secret: SESSION_SECRET,
       resave: false,
       saveUninitialized: false,

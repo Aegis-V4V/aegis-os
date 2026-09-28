@@ -1,43 +1,58 @@
-# Aegis Console
+# Aegis OS
 
-The unified Podcasting 2.0 operating system, audio console, and Discord streaming suite.
+[![Namespace](https://img.shields.io/badge/namespace-Aegis--V4V-1B4F72)](https://alanwoodyard.com)
+[![Stack](https://img.shields.io/badge/stack-Node_Express_%2B_dhive_%2B_DuckDB-1A5276)](https://alanwoodyard.com)
+[![IP](https://img.shields.io/badge/IP-open__core_%7C_Apache--2.0-196F3D)](https://alanwoodyard.com)
 
----
+[Alan Woodyard](https://alanwoodyard.com)
 
-## 🏛️ Architecture & Workspace
+## System Role
 
-* **`apps/aegis-os`** (`aegis-os`): Core Podcasting 2.0 harvester, crawler, RSS validator, PostgreSQL/SQLite data pipeline, web server, and web player frontend.
-* **`apps/discord-bot`** (`aegis-pod-bot`): TypeScript Discord bot streaming episodes and radio stations into voice channels with live boostagram feeds and listening rooms.
-* **`web/portal`** (**Pod Assay**): Distinct, parked `podassay.space` module whose history predates Aegis. It retains its own identity and module boundary under the owner-authorized consolidation; it is not a generic Aegis portal or redirect.
-* **`ops/`**: Core systemd units (`aegis-brain-api.service`, `aegis-scout.service`) and deployment runbooks. The bot unit is at `apps/discord-bot/ops/aegis-pod-bot.service`.
+Aegis OS is the Value4Value audio streaming and Podcasting 2.0 ingest system. It scores shows, watches Podping, and runs the Aether playout queue, with Hive transfers as the value path.
 
-See [`docs/consolidation-provenance.md`](docs/consolidation-provenance.md) for source repositories, imported tips, ownership boundaries, and the Pod Assay exception.
+Registered tagline: Podcasting 2.0 scorecard, Podping spider, and Aether playout queue. Harvest maturity: working core (11,697 implementation LOC, 1,836 test LOC).
 
----
+## Audited Architecture & Runtime
 
-## 🚀 Quick Start
+npm root `aegis-console` 1.0.0 (`build`, `test`). Application package `apps/aegis-os` 3.0.0.
 
-### 1. Install Workspace Dependencies
-```bash
-npm install
-```
+Node dependencies harvested: `express`, `@hiveio/dhive`, `duckdb`, `axios`, `ws`, `pg`, `sqlite3`, `fast-xml-parser`, `node-cron`, `cors`, `express-basic-auth`, `dotenv`. Catalog stack also names Node 24 native `node:sqlite` (`DatabaseSync` ABI 137) and TypeScript. The harvested server imports include both `sqlite3` and `pg`; DuckDB is the analytical store (`duckdb` on Node, and `duckdb` on the Python package).
 
-### 2. Build Workspace
-```bash
-npm run build
-```
+Python workspace member `apps/aegis-os` (`flask`, `requests`, `duckdb`): `audit_brain.py`, `brain_api.py`, `reaper.py`, `scout.py`, `data_pipeline.js` beside them. Frontend: Vite under `apps/aegis-os/frontend`. Discord bot: `apps/discord-bot` (`discord.js`, `express-session`, `sql.js`).
 
-### 3. Run Test Suites
-```bash
-# Run Discord bot integration test suites
-cd apps/discord-bot
-node scripts/test_agora_commands.js
-node scripts/test_agora_state.js
-node scripts/test_akroasis_dashboard.js
-node scripts/test_asphaleia_health.js
-node scripts/test_chapters_comments.js
-node scripts/test_choros_rhema.js
-node scripts/test_dashboard_hardening.js
-node scripts/test_horai_sync.js
-node scripts/test_keryx_dedupe.js
-```
+Hive reads and broadcasts go through `@hiveio/dhive`. Podcast XML goes through `fast-xml-parser`. WebSockets (`ws`) carry live playout signals.
+
+## CLI / API Surface
+
+npm scripts: root `build`, `test`; app `build`, `setup`, `start`, `test`, `postinstall`; frontend `dev`, `build`, `preview`; bot `dev`, `start`, `deploy-commands`.
+
+HTTP routes harvested from the API:
+
+- `GET /health`
+- `GET /api/random-top`
+- `GET /api/search`
+- `GET /api/scan`
+- `POST /api/invoice`
+- `POST /api/login`
+- `POST /api/deposit`
+- `POST /api/paypal/create-order`
+- `POST /api/paypal/capture-order`
+- `POST /api/strike/create-invoice`
+- `POST /api/strike/check-status`
+- `POST /api/boost`
+- `POST /api/support-aegis`
+- `POST /api/boost-artist`
+- `POST /api/verify-ledger`
+- `POST /api/pay-basic-scan`
+- `POST /api/report-email`
+- `GET /api/auth/login`
+- `GET /api/auth/callback`
+- `GET /api/auth/user`
+
+Value routes (`boost`, `deposit`, `invoice`, PayPal, Strike) are the V4V edge. `verify-ledger` checks a Hive-side claim. Search and scan serve the Podcasting 2.0 scorecard.
+
+## Operational Boundaries
+
+Public open core, Apache-2.0. Podcast metadata ingest is the open path. Payment credentials for PayPal and Strike belong in the environment of the deployment, not in the repository.
+
+Hive account authority stays with the operator who holds the keys. This service posts transfers it was asked to post. It does not custody a listener's keys inside the scorecard database. DuckDB and SQLite files are local analytical and session stores. Postgres (`pg`) is the optional shared store where a deployment has already chosen one.
